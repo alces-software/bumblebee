@@ -40,11 +40,11 @@ awsregion=$(curl -s http://169.254.169.254/latest/meta-data/placement/availabili
 instanceid=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 buildsubnet=$($awsbin ec2 --region $awsregion describe-subnets \
 				--filters Name=tag:Name,Values=${clustername}-build | grep SubnetId | awk '{print $2}' | tr -d '",')
-prvsubnet=$(aws ec2 --region $awsregion describe-subnets \
+prvsubnet=$($awsbin ec2 --region $awsregion describe-subnets \
 				--filters Name=tag:Name,Values=${clustername}-prv | grep SubnetId | awk '{print $2}' | tr -d '",')
 
 ## Create, configure and attach interfaces
-buildintcreate=$(awsbin ec2 --output table --region $awsregion create-network-interface \
+buildintcreate=$($awsbin ec2 --output table --region $awsregion create-network-interface \
 					--subnet-id $buildsubnet \
 					--description "Build interface for $HOSTNAME" \
 					--private-ip-address "10.75.10.$tail" | grep NetworkInterfaceId | awk '{print $4}')
