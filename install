@@ -74,7 +74,7 @@ NETMASK="255.255.255.0"
 EOF
 cat << EOF > /etc/sysconfig/network-scripts/ifcfg-eth2
 DEVICE="eth2"
-BOOTPROTO="none
+BOOTPROTO="none"
 ONBOOT="yes"
 TYPE="Ethernet"
 IPADDR="10.75.20.${tail}"
