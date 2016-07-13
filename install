@@ -6,14 +6,6 @@ set -ex
 ## Copyright (c) 2016 Alces Software Ltd
 ##
 ################################################################################
-## Write a fake config file for now, to be replaced with magic
-cat << EOF > /etc/alces-interfaces
-tail=10
-profilename=login1
-clustername=testcluster1
-domain=alces.network
-EOF
-
 ## Check interface config file is present
 if [ ! -f /etc/alces-interfaces ];
 then
