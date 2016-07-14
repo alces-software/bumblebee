@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+require 'yaml'
+config = YAML.load_file("/opt/bumblebee/etc/config.yml")
+config.each do |interface,details|
+  intname = details["name"]
+  ipaddr = details["ipaddr"]
+  netmask = details["netmask"]
+  intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
+  intconfig.puts "DEVICE=\"#{intname}\"\n"
+  intconfig.puts "BOOTPROTO=\"none\"\n"
+  intconfig.puts "ONBOOT=\"yes\"\n"
+  intconfig.puts "TYPE=\"Ethernet\"\n"
+  intconfig.puts "IPADDR=\"#{ipaddr}\"\n"
+  intconfig.puts "NETMASK=\"#{netmask}\"\n"
+  intconfig.close
+end
