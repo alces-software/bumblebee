@@ -127,7 +127,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-56264725"
+                "HVM64": "ami-d46405a7"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -781,10 +781,16 @@
                                 "    name: ", { "Ref": "Username" }, "\n",
                                 "write_files:\n",
                                 "- content: |\n",
-                                "    tail=10\n",
-                                "    profilename=login1\n",
-                                "    clustername=", { "Ref": "AWS::StackName" }, "\n",
-                                "    domain=alces.network\n",
+                                "    eth0:\n",
+                                "      name: eth0\n",
+                                "      ipaddr: 10.75.10.10\n",
+                                "      netmask: 255.255.0.0\n",
+                                "      subnet: ", { "Ref": "AWS::StackName" }, "-build\n",
+                                "    eth1:\n",
+                                "      name: eth1\n",
+                                "      ipaddr: 10.75.20.10\n",
+                                "      netmask: 255.255.0.0\n",
+                                "      subnet: ", { "Ref": "AWS::StackName" }, "-prv\n",
                                 "  owner: root:root\n",
                                 "  path: /etc/alces-interfaces\n",
                                 "  permissions: '0550'"
@@ -874,10 +880,16 @@
                                 }, "\n",
                                 "write_files:\n",
                                 "- content: |\n",
-                                "    tail=21\n",
-                                "    profilename=node01\n",
-                                "    clustername=", { "Ref": "AWS::StackName" }, "\n",
-                                "    domain=alces.network\n",
+                                "    eth0:\n",
+                                "      name: eth0\n",
+                                "      ipaddr: 10.75.10.10\n",
+                                "      netmask: 255.255.0.0\n",
+                                "      subnet: ", { "Ref": "AWS::StackName" }, "-build\n",
+                                "    eth1:\n",
+                                "      name: eth1\n",
+                                "      ipaddr: 10.75.20.10\n",
+                                "      netmask: 255.255.0.0\n",
+                                "      subnet: ", { "Ref": "AWS::StackName" }, "-prv\n",
                                 "  owner: root:root\n",
                                 "  path: /etc/alces-interfaces\n",
                                 "  permissions: '0550'"
