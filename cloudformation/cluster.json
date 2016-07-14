@@ -792,8 +792,8 @@
                                 "      netmask: 255.255.0.0\n",
                                 "      subnet: ", { "Ref": "AWS::StackName" }, "-prv\n",
                                 "  owner: root:root\n",
-                                "  path: /etc/alces-interfaces\n",
-                                "  permissions: '0550'"
+                                "  path: /opt/bumblebee/etc/config.yml\n",
+                                "  permissions: '0740'"
                             ]
                         ]
                     }
@@ -891,8 +891,8 @@
                                 "      netmask: 255.255.0.0\n",
                                 "      subnet: ", { "Ref": "AWS::StackName" }, "-prv\n",
                                 "  owner: root:root\n",
-                                "  path: /etc/alces-interfaces\n",
-                                "  permissions: '0550'"
+                                "  path: /opt/bumblebee/etc/config.yml\n",
+                                "  permissions: '0740'"
                             ]
                         ]
                     }
