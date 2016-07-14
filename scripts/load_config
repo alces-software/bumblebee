@@ -27,7 +27,7 @@ config.each do |interface,details|
     description: "#{subnetname} interface for #{instance_id}",
     private_ip_address: ipaddr,
   })
- # Generate network_interface_id
+  # Generate network_interface_id
   network_interface_id = createint.network_interface.network_interface_id
 
   attachint = ec2.attach_network_interface({
@@ -35,12 +35,13 @@ config.each do |interface,details|
     instance_id: instance_id,
     device_index: deviceindex,
   })
-  # For each provided interface, create
+  # Generate attachment_id
+  attachment_id = createint.network_interface.attachment.attachment_id
 
   modifyint = ec2.modify_network_interface_attribute({
-    network_interface_id: "#{createint}",
+    network_interface_id: network_interface_id,
     attachment: {
-      attachment_id: "#{attachint}",
+      attachment_id: attachment_id,
       delete_on_termination: true,
     }
   })
