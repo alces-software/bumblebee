@@ -1,16 +1,58 @@
 #!/usr/bin/env ruby
 require 'yaml'
-config = YAML.load_file("/opt/bumblebee/etc/config.yml")
+require 'aws-sdk'
+require 'net/http'
+
+# Collect instance information
+metadata_endpoint = 'http://169.254.169.254/latest/meta-data/'
+instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'instance-id' ) )
+getregion = Net::HTTP.get ( URI.parse ( metadata_endpoint + 'placement/availability-zone' ) )
+region = "getregion"[0..-1]
+
+# Set up EC2 client
+ec2 = Aws::EC2::Client.new(region: 'eu-west-1')
+
+config = YAML.load_file("/opt/bumblebee/etc/interfaces.yml")
 config.each do |interface,details|
+
   intname = details["name"]
   ipaddr = details["ipaddr"]
   netmask = details["netmask"]
+  subnetid = details["subnetid"]
+  subnetname = details["subnetname"]
+  deviceindex = intname.gsub(/[^0-9]/,"")
+
+  createint = ec2.create_network_interface({
+    subnet_id: subnetid,
+    description: "#{subnetname} interface for #{instance_id}",
+    private_ip_address: ipaddr,
+  })
+ # Generate network_interface_id
+  network_interface_id = createint.network_interface.network_interface_id
+
+  attachint = ec2.attach_network_interface({
+    network_interface_id: network_interface_id,
+    instance_id: instance_id,
+    device_index: deviceindex,
+  })
+  # For each provided interface, create
+
+  modifyint = ec2.modify_network_interface_attribute({
+    network_interface_id: "#{createint}",
+    attachment: {
+      attachment_id: "#{attachint}",
+      delete_on_termination: true,
+    }
+  })
+
   intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
+
   intconfig.puts "DEVICE=\"#{intname}\"\n"
   intconfig.puts "BOOTPROTO=\"none\"\n"
   intconfig.puts "ONBOOT=\"yes\"\n"
   intconfig.puts "TYPE=\"Ethernet\"\n"
   intconfig.puts "IPADDR=\"#{ipaddr}\"\n"
   intconfig.puts "NETMASK=\"#{netmask}\"\n"
+
   intconfig.close
 end
