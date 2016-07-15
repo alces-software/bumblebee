@@ -36,7 +36,7 @@ config.each do |interface,details|
     device_index: deviceindex,
   })
   # Generate attachment_id
-  attachment_id = createint.network_interface.attachment.attachment_id
+  attachment_id = attachint.attachment_id
 
   modifyint = ec2.modify_network_interface_attribute({
     network_interface_id: network_interface_id,
