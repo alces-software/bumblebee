@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/opt/clusterware/opt/ruby/bin/ruby
 require 'yaml'
 require 'aws-sdk'
 require 'net/http'
@@ -56,4 +56,11 @@ config.each do |interface,details|
   intconfig.puts "NETMASK=\"#{netmask}\"\n"
 
   intconfig.close
+
+  # Bring up each interface
+  intwait = `while [ ! "$(ip addr | grep "#{intname}")" ]; do sleep 1; done`
+  intup = `ifup #{intname}`
+  system(intwait)
+  system(intup)
+
 end
