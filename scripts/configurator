@@ -1,4 +1,10 @@
 #!/opt/clusterware/opt/ruby/bin/ruby
+################################################################################
+###
+### Bumblebee - Configurator
+### Copyright (c) 2016 Alces Software Ltd
+###
+#################################################################################
 require 'yaml'
 require 'aws-sdk'
 require 'net/http'
@@ -10,17 +16,35 @@ getregion = Net::HTTP.get ( URI.parse ( metadata_endpoint + 'placement/availabil
 region = "getregion"[0..-1]
 
 # Set up EC2 client
-ec2 = Aws::EC2::Client.new(region: 'eu-west-1')
+ec2 = Aws::EC2::Client.new(region: region)
+
+cluster = YAML.load_file("/opt/bumblebee/etc/cluster.yml")
+cluster.each do |cluster,info|
+
+  nodename = info["profile"]
+  domain = info["domain"]
+  cluster = info["cluster"]
+
+  fqdn "#{nodename}.#{cluster}.#{domain}"
+
+  sethn = `hostnamectl set-hostname #{fqdn}`
+  sethntrans = `hostnamectl set-hostname --transient #{fqdn}`
+  system(sethn)
+  system(sethntransient)
+
+end
 
 config = YAML.load_file("/opt/bumblebee/etc/interfaces.yml")
-config.each do |interface,details|
+config.each do |interface,info|
 
-  intname = details["name"]
-  ipaddr = details["ipaddr"]
-  netmask = details["netmask"]
-  subnetid = details["subnetid"]
-  subnetname = details["subnetname"]
+  intname = info["name"]
+  ipaddr = info["ipaddr"]
+  netmask = info["netmask"]
+  subnetid = info["subnetid"]
+  subnetname = info["subnetname"]
   deviceindex = intname.gsub(/[^0-9]/,"")
+
+  printf "Found interface #{name}\n"
 
   createint = ec2.create_network_interface({
     subnet_id: subnetid,
@@ -45,6 +69,8 @@ config.each do |interface,details|
       delete_on_termination: true,
     }
   })
+
+  printf "Configuring interface #{name} as #{ipaddr} on #{subnetname}\n"
 
   intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
 

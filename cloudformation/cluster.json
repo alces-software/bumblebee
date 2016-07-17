@@ -792,8 +792,16 @@
                                 "      netmask: 255.255.0.0\n",
                                 "      subnet: ", { "Ref": "AWS::StackName" }, "-prv\n",
                                 "  owner: root:root\n",
-                                "  path: /opt/bumblebee/etc/config.yml\n",
-                                "  permissions: '0740'"
+                                "  path: /opt/bumblebee/etc/interfaces.yml\n",
+                                "  permissions: '0740'\n",
+                                "- content: |\n",
+                                "    instance:\n",
+                                "      name: ", { "Ref": "AWS::StackName" }, "\n",
+                                "      domain: alces.cluster\n",
+                                "      profile: login1\n",
+                                "  owner: root:root\n",
+                                "  path: /opt/bumblebee/etc/cluster.yml\n",
+                                "  permissions: '0740'\n"
                             ]
                         ]
                     }
@@ -891,8 +899,16 @@
                                 "      netmask: 255.255.0.0\n",
                                 "      subnet: ", { "Ref": "AWS::StackName" }, "-prv\n",
                                 "  owner: root:root\n",
-                                "  path: /opt/bumblebee/etc/config.yml\n",
-                                "  permissions: '0740'"
+                                "  path: /opt/bumblebee/etc/interfaces.yml\n",
+                                "  permissions: '0740'",
+                                "- content: |\n",
+                                "    instance:\n",
+                                "      name: ", { "Ref": "AWS::StackName" }, "\n",
+                                "      domain: alces.cluster\n",
+                                "      profile: node01\n",
+                                "  owner: root:root\n",
+                                "  path: /opt/bumblebee/etc/cluster.yml\n",
+                                "  permissions: '0740'\n"
                             ]
                         ]
                     }
