@@ -118,7 +118,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-064d2d75"
+                "HVM64": "ami-3d54344e"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -786,7 +786,7 @@
                                 "  permissions: '0740'\n",
                                 "- content: |\n",
                                 "    instance:\n",
-                                "      name: ", { "Ref": "AWS::StackName" }, "\n",
+                                "      cluster: ", { "Ref": "AWS::StackName" }, "\n",
                                 "      domain: alces.cluster\n",
                                 "      profile: login1\n",
                                 "  owner: root:root\n",
@@ -888,7 +888,7 @@
                                 "  permissions: '0740'",
                                 "- content: |\n",
                                 "    instance:\n",
-                                "      name: ", { "Ref": "AWS::StackName" }, "\n",
+                                "      cluster: ", { "Ref": "AWS::StackName" }, "\n",
                                 "      domain: alces.cluster\n",
                                 "      profile: node01\n",
                                 "  owner: root:root\n",
@@ -992,12 +992,6 @@
         }
     },
     "Outputs": {
-        "Username": {
-            "Description": "Administrator username used to log in to your environment with. This should be used in conjunction with your selected AWS keypair - together with the provided access IP",
-            "Value": {
-                "Ref": "Username"
-            }
-        },
         "AccessIP": {
           "Description": "Public access IP for your Flight Compute environment. Use together with your chosen username to gain SSH access",
           "Value": {
