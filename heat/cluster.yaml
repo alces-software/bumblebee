@@ -1,0 +1,196 @@
+heat_template_version: 2013-05-23
+
+description: >
+    Bumblebee Heat template
+
+parameters:
+  admin_key:
+    type: string
+    label: Cluster admin key
+    description: Enter the name of an OpenStack nova keypair for administrator access
+    constraints:
+    - custom_constraint: nova.keypair
+
+  cluster_type:
+    type: string
+    label: Bumblebee Image
+    description: Choose Bumblebee image to use
+    constraints:
+    - custom_constraint: glance.image
+
+  compute_flavour:
+    type: string
+    label: >
+      Compute node instance type
+    description: Compute node type
+    constraints:
+    - custom_constraint: nova.flavor
+
+  compute_number:
+    type: number
+    label: Number of compute nodes
+    description: Number of compute nodes to deploy
+    default: 1
+
+resources:
+  cluster_network:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: 'OS::stack_name' }
+
+  ext_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: cluster_network }
+      cidr: 10.75.0.0/24
+      gateway_ip: 10.75.0.254
+      dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
+      allocation_pools:
+        - start: 10.75.0.2
+          end: 10.75.0.253
+
+  build_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: cluster_network }
+      cidr: 10.75.10.0/24
+      dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
+      allocation_pools:
+        - start: 10.75.10.2
+          end: 10.75.10.253
+
+  prv_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: cluster_network }
+      cidr: 10.75.20.0/24
+      dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
+      allocation_pools:
+        - start: 10.75.10.2
+          end: 10.75.10.253
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: public
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: cluster_subnet }
+
+  cluster_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: 'OS::stack_name' }
+      description: Enable ping/SSH
+      rules:
+      - protocol: icmp
+      - protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+
+  master_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+            write_files:
+            - path: /opt/bumblebee/etc/cluster.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    instance:
+                      cluster: '%CLUSTER_NAME%'
+                      domain: alces.cluster
+                      role: login1
+                    interfaces:
+                      eth1:
+                        name: eth1
+                        ipaddr: 10.75.10.10
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                      eth2:
+                        name: eth2
+                        ipaddr: 10.75.20.10
+                        netmask: 255.255.255.0
+                        primary_interface: true
+
+                  params:
+                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+
+  node_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+            system_info:
+              default_user:
+                  name: { get_param: admin_username }
+            write_files:
+            - path: /opt/clusterware/etc/config.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    instance:
+                      cluster: '%CLUSTER_NAME%'
+                      domain: alces.cluster
+                      profile: node01
+                    interfaces:
+                      eth1:
+                        name: eth1
+                        ipaddr: 10.75.10.11
+                        netmask: 255.255.255.0
+
+                  params:
+                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+           
+  login1:
+    type: OS::Nova::Server
+    properties:
+      name: login1
+      image: { get_param: cluster_type }
+      flavor: { get_param: compute_flavour }
+      key_name: { get_param: admin_key }
+      networks:
+        - port: { get_resource: login1_port }
+      user_data_format: RAW
+      user_data: { get_resource: master_config }
+
+  login1_port:
+    type: OS::Neutron::Port
+    depends_on: cluster_subnet
+    properties:
+      network_id: { get_resource: cluster_network }
+      fixed_ips:
+        - subnet_id: { get_resource: ext_subnet }
+
+  login1_access:
+    type: OS::Neutron::FloatingIP
+    depends_on: router
+    properties:
+      floating_network: public
+      port_id: { get_resource: login1_port }
+
+  compute_group:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: { get_param: compute_number }
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          name: node0%index%
+          flavor: { get_param: compute_flavour }
+          image: { get_param: cluster_type }
+          user_data_format: RAW
+          user_data: { get_resource: node_config }
+          networks: [{ network: { get_resource: cluster_network } }]
+
+outputs:
+  login1_public_ip:
+    description: Floating IP address of login1 in public network
+    value: { get_attr: [ login1_access, floating_ip_address ] }
