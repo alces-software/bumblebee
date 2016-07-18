@@ -127,7 +127,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-d46405a7"
+                "HVM64": "ami-064d2d75"
             },
             "ap-southeast-1": {
                 "HVM64": ""
