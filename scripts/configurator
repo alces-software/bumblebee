@@ -1,4 +1,5 @@
 #!/opt/clusterware/opt/ruby/bin/ruby
+#!/bin/ruby
 ################################################################################
 ###
 ### Bumblebee - Configurator
@@ -22,35 +23,38 @@ Aws.config[:region] = region
 Aws.config[:credentials] = Aws::InstanceProfileCredentials.new
 ec2 = Aws::EC2::Client.new
 
-cluster = YAML.load_file("/opt/bumblebee/etc/cluster.yml")
-cluster.each do |cluster,info|
-
-  nodename = info["profile"]
-  domain = info["domain"]
-  cluster = info["cluster"]
-
-  fqdn = "#{nodename}.#{cluster}.#{domain}"
-
-  puts "Configuring #{instance_id} as #{fqdn}"
-
-  sethn = `hostnamectl set-hostname #{fqdn}`
-  sethntrans = `hostnamectl set-hostname --transient #{fqdn}`
-  system(sethn)
-  system(sethntrans)
-
-end
-
-config = YAML.load_file("/opt/bumblebee/etc/interfaces.yml")
-config.each do |interface,info|
-
+config = YAML.load_file("/opt/bumblebee/etc/cluster.yml")
+interfaceconfig = config['interfaces']
+clusterconfig = config['instance']
+interfaceconfig.each do |interface,info|
   intname = info["name"]
   ipaddr = info["ipaddr"]
   netmask = info["netmask"]
   subnetid = info["subnetid"]
   subnetname = info["subnetname"]
+  primary_interface = info["primary_interface"]
   deviceindex = intname.gsub(/[^0-9]/,"")
 
+  nodename = clusterconfig["profile"]
+  domain = clusterconfig["domain"]
+  cluster = clusterconfig["cluster"]
+
+  fqdn = "#{nodename}.#{cluster}.#{domain}"
+
   printf "Found interface #{intname}\n"
+
+  puts primary_interface
+  if primary_interface.nil?
+  elsif primary_interface == true
+    puts "Configuring #{instance_id} as #{fqdn} with primary interface #{intname}"
+    sethn = `hostnamectl set-hostname #{fqdn}`
+    sethntrans = `hostnamectl set-hostname --transient #{fqdn}`
+    system(sethn)
+    system(sethntrans)
+    open('/etc/hosts', 'a') { |w|
+      w.puts "#{ipaddr} #{fqdn} #{nodename}"
+    }
+  end
 
   createint = ec2.create_network_interface({
     subnet_id: subnetid,
@@ -94,5 +98,4 @@ config.each do |interface,info|
   intup = `ifup #{intname}`
   system(intwait)
   system(intup)
-
 end
