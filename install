@@ -6,10 +6,11 @@ set -ex
 ## Copyright (c) 2016 Alces Software Ltd
 ##
 ################################################################################
-if [ -z $BUMBLEBEEDIR ];
-then
-    BUMBLEBEEDIR="/opt/bumblebee"
-fi
+BUMBLEBEEDIR="/opt/bumblebee"
+
+# Install required dependencies
+yum -y install ruby
+gem install aws-sdk
 
 if [ ! $(which git) ];
 then
