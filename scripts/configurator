@@ -42,7 +42,6 @@ interfaceconfig.each do |interface,info|
 
   printf "Found interface #{intname}\n"
 
-  puts primary_interface
   if primary_interface.nil?
   elsif primary_interface == true
     puts "Configuring #{instance_id} as #{fqdn} with primary interface #{intname}"

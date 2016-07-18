@@ -118,7 +118,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-3d54344e"
+                "HVM64": "ami-5eadcd2d"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -780,6 +780,7 @@
                               "        netmask: 255.255.255.0\n",
                               "        subnetname: ", { "Ref": "AWS::StackName" }, "-build\n",
                               "        subnetid: ", { "Ref": "FlightBuildSubnet" }, "\n",
+                              "        primary_interface: true\n",
                               "      eth2:\n",
                               "        name: eth2\n",
                               "        ipaddr: 10.75.20.10\n",
@@ -880,6 +881,7 @@
                               "        netmask: 255.255.255.0\n",
                               "        subnetname: ", { "Ref": "AWS::StackName" }, "-build\n",
                               "        subnetid: ", { "Ref": "FlightBuildSubnet" }, "\n",
+                              "        primary_interface: true\n",
                               "      eth2:\n",
                               "        name: eth2\n",
                               "        ipaddr: 10.75.20.11\n",
