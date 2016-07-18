@@ -5,15 +5,6 @@
             "Description": "Choose an existing AWS key for administrator access",
             "Type": "AWS::EC2::KeyPair::KeyName"
         },
-        "Username": {
-            "Description": "Enter a username - this is used for the cluster administrator account",
-            "Type": "String",
-            "Default": "alces",
-            "MaxLength": "16",
-            "MinLength": "1",
-            "AllowedPattern": "[-a-z0-9]*",
-            "ConstraintDescription": "Enter a username between 1 and 16 characters using a-z, 1 to 9 and -"
-        },
         "ComputeSpotPrice": {
             "Description": "Enter your maximum bid per hour for each compute instance. View the Spot Request calculator for information on spot pricing. (Enter 0 for on-demand).",
             "Type": "Number",
@@ -776,9 +767,6 @@
                             "",
                             [
                                 "#cloud-config\n",
-                                "system_info:\n",
-                                "  default_user:\n",
-                                "    name: ", { "Ref": "Username" }, "\n",
                                 "write_files:\n",
                                 "- content: |\n",
                                 "    eth1:\n",
@@ -882,12 +870,6 @@
                             "",
                             [
                                 "#cloud-config\n",
-                                "system_info:\n",
-                                "  default_user:\n",
-                                "    name: ",
-                                {
-                                    "Ref": "Username"
-                                }, "\n",
                                 "write_files:\n",
                                 "- content: |\n",
                                 "    eth1:\n",
