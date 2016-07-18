@@ -12,11 +12,15 @@ require 'net/http'
 # Collect instance information
 metadata_endpoint = 'http://169.254.169.254/latest/meta-data/'
 instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'instance-id' ) )
+puts "Found instance ID: #{instance_id}"
 getregion = Net::HTTP.get ( URI.parse ( metadata_endpoint + 'placement/availability-zone' ) )
-region = "getregion"[0..-1]
+region = getregion[0..-2]
+puts "Found AWS region: #{region}"
 
 # Set up EC2 client
-ec2 = Aws::EC2::Client.new(region: region)
+Aws.config[:region] = region
+Aws.config[:credentials] = Aws::InstanceProfileCredentials.new
+ec2 = Aws::EC2::Client.new
 
 cluster = YAML.load_file("/opt/bumblebee/etc/cluster.yml")
 cluster.each do |cluster,info|
@@ -25,12 +29,14 @@ cluster.each do |cluster,info|
   domain = info["domain"]
   cluster = info["cluster"]
 
-  fqdn "#{nodename}.#{cluster}.#{domain}"
+  fqdn = "#{nodename}.#{cluster}.#{domain}"
+
+  puts "Configuring #{instance_id} as #{fqdn}"
 
   sethn = `hostnamectl set-hostname #{fqdn}`
   sethntrans = `hostnamectl set-hostname --transient #{fqdn}`
   system(sethn)
-  system(sethntransient)
+  system(sethntrans)
 
 end
 
@@ -44,7 +50,7 @@ config.each do |interface,info|
   subnetname = info["subnetname"]
   deviceindex = intname.gsub(/[^0-9]/,"")
 
-  printf "Found interface #{name}\n"
+  printf "Found interface #{intname}\n"
 
   createint = ec2.create_network_interface({
     subnet_id: subnetid,
@@ -70,7 +76,7 @@ config.each do |interface,info|
     }
   })
 
-  printf "Configuring interface #{name} as #{ipaddr} on #{subnetname}\n"
+  printf "Configuring interface #{intname} as #{ipaddr} on #{subnetname}\n"
 
   intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
 

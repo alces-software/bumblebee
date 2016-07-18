@@ -1,3 +1,9 @@
+################################################################################
+##
+## Bumblebee - Configurator 
+## Copyright (c) 2016 Alces Software Ltd
+##
+################################################################################
 [Unit]
 Description=Bumblebee configurator
 After=cloud-init.service
