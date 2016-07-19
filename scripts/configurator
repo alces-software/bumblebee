@@ -89,6 +89,11 @@ interfaceconfig.each do |interface,info|
 
   printf "Configuring interface #{intname} as #{ipaddr} on #{subnetname}\n"
 
+  # Write interface configs and adjust firewall
+
+  iptables_config = `iptables -A INPUT -i #{intname} -j ACCEPT`
+  system(iptables_config)
+
   intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
 
   intconfig.puts "DEVICE=\"#{intname}\"\n"
