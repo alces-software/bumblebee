@@ -96,7 +96,7 @@ interfaceconfig.each do |interface,info|
   # Write interface configs and adjust firewall
   iptables_config = `sed -i '/#APPLIANCERULES#/a -A INPUT -i #{intname} -j ACCEPT' /etc/sysconfig/iptables`
   system(iptables_config)
-  reload_config = `service iptables restart`
+  reload_config = `systemctl restart iptables`
   system(reload_config)
 
   intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
