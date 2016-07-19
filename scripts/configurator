@@ -87,7 +87,11 @@ interfaceconfig.each do |interface,info|
 
   printf "Found interface #{intname}\n"
 
-  printf "Configuring interface #{intname} as #{ipaddr} on #{subnetname}\n"
+  if ipaddr.nil?
+    printf "Configuring interface #{intname} as #{ipaddr} on #{subnetname}\n"
+  else
+    printf "Configuring interface #{intname} on #{subnetname}\n"
+  end
 
   # Write interface configs and adjust firewall
   iptables_config = `iptables -A INPUT -i #{intname} -j ACCEPT`
