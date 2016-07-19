@@ -12,7 +12,7 @@ require 'aws-sdk'
 # Collect instance information
 metadata_endpoint = 'http://169.254.169.254/latest/meta-data/'
 platform = Net::HTTP.get( URI.parse ( metadata_endpoint + 'network/' ) )
-if platform.nil?
+if platform["interfaces/"]
   platform = 'aws'
   instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'instance-id' ) )
   puts "Found instance ID: #{instance_id}"
@@ -46,8 +46,6 @@ interfaceconfig.each do |interface,info|
   cluster = clusterconfig["cluster"]
 
   fqdn = "#{nodename}.#{cluster}.#{domain}"
-
-  printf "Found interface #{intname}\n"
 
   if primary_interface.nil?
   elsif primary_interface == true
@@ -86,6 +84,8 @@ interfaceconfig.each do |interface,info|
       }
     })
   end
+
+  printf "Found interface #{intname}\n"
 
   printf "Configuring interface #{intname} as #{ipaddr} on #{subnetname}\n"
 
