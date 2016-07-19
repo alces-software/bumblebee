@@ -116,18 +116,19 @@ resources:
                     instance:
                       cluster: '%CLUSTER_NAME%'
                       domain: alces.cluster
-                      role: login1
+                      profile: login1
                     interfaces:
                       eth1:
                         name: eth1
                         ipaddr: 10.75.10.10
                         netmask: 255.255.255.0
                         primary_interface: true
+                        subnetname: %CLUSTER_NAME%-build 
                       eth2:
                         name: eth2
                         ipaddr: 10.75.20.10
                         netmask: 255.255.255.0
-                        primary_interface: true
+                        subnetname: %CLUSTER_NAME%-prv 
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -152,6 +153,13 @@ resources:
                         name: eth1
                         ipaddr: 10.75.10.11
                         netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: %CLUSTER_NAME%-build 
+                      eth2:
+                        name: eth2
+                        ipaddr: 10.75.20.11
+                        netmask: 255.255.255.0
+                        subnetname: %CLUSTER_NAME%-build 
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }

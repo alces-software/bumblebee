@@ -6,21 +6,28 @@
 ###
 #################################################################################
 require 'yaml'
-require 'aws-sdk'
 require 'net/http'
+require 'aws-sdk'
 
 # Collect instance information
 metadata_endpoint = 'http://169.254.169.254/latest/meta-data/'
-instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'instance-id' ) )
-puts "Found instance ID: #{instance_id}"
-getregion = Net::HTTP.get ( URI.parse ( metadata_endpoint + 'placement/availability-zone' ) )
-region = getregion[0..-2]
-puts "Found AWS region: #{region}"
+platform = Net::HTTP.get( URI.parse ( metadata_endpoint + 'network/' ) )
+if platform.nil?
+  platform = 'aws'
+  instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'instance-id' ) )
+  puts "Found instance ID: #{instance_id}"
+  getregion = Net::HTTP.get ( URI.parse ( metadata_endpoint + 'placement/availability-zone' ) )
+  region = getregion[0..-2]
+  puts "Found AWS region: #{region}"
+  # Set up EC2 client
+  Aws.config[:region] = region
+  Aws.config[:credentials] = Aws::InstanceProfileCredentials.new
+  ec2 = Aws::EC2::Client.new
+elsif platform["Not Found"]
+  platform = 'openstack'
+  instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'local-ipv4' ) )
+end
 
-# Set up EC2 client
-Aws.config[:region] = region
-Aws.config[:credentials] = Aws::InstanceProfileCredentials.new
-ec2 = Aws::EC2::Client.new
 
 config = YAML.load_file("/opt/bumblebee/etc/cluster.yml")
 interfaceconfig = config['interfaces']
@@ -54,29 +61,31 @@ interfaceconfig.each do |interface,info|
     }
   end
 
-  createint = ec2.create_network_interface({
-    subnet_id: subnetid,
-    description: "#{subnetname} interface for #{instance_id}",
-    private_ip_address: ipaddr,
-  })
-  # Generate network_interface_id
-  network_interface_id = createint.network_interface.network_interface_id
+  if platform == 'aws'
+    createint = ec2.create_network_interface({
+      subnet_id: subnetid,
+      description: "#{subnetname} interface for #{instance_id}",
+      private_ip_address: ipaddr,
+    })
+    # Generate network_interface_id
+    network_interface_id = createint.network_interface.network_interface_id
 
-  attachint = ec2.attach_network_interface({
-    network_interface_id: network_interface_id,
-    instance_id: instance_id,
-    device_index: deviceindex,
-  })
-  # Generate attachment_id
-  attachment_id = attachint.attachment_id
+    attachint = ec2.attach_network_interface({
+      network_interface_id: network_interface_id,
+      instance_id: instance_id,
+      device_index: deviceindex,
+    })
+    # Generate attachment_id
+    attachment_id = attachint.attachment_id
 
-  modifyint = ec2.modify_network_interface_attribute({
-    network_interface_id: network_interface_id,
-    attachment: {
-      attachment_id: attachment_id,
-      delete_on_termination: true,
-    }
-  })
+    modifyint = ec2.modify_network_interface_attribute({
+      network_interface_id: network_interface_id,
+      attachment: {
+        attachment_id: attachment_id,
+        delete_on_termination: true,
+      }
+    })
+  end
 
   printf "Configuring interface #{intname} as #{ipaddr} on #{subnetname}\n"
 
