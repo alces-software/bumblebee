@@ -33,7 +33,17 @@ parameters:
     default: 1
 
 resources:
-  cluster_network:
+  ext_network:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: 'OS::stack_name' }
+
+  build_network:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: 'OS::stack_name' }
+
+  prv_network:
     type: OS::Neutron::Net
     properties:
       name: { get_param: 'OS::stack_name' }
@@ -41,7 +51,7 @@ resources:
   ext_subnet:
     type: OS::Neutron::Subnet
     properties:
-      network_id: { get_resource: cluster_network }
+      network_id: { get_resource: ext_network }
       cidr: 10.75.0.0/24
       gateway_ip: 10.75.0.254
       dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
@@ -52,7 +62,7 @@ resources:
   build_subnet:
     type: OS::Neutron::Subnet
     properties:
-      network_id: { get_resource: cluster_network }
+      network_id: { get_resource: build_network }
       cidr: 10.75.10.0/24
       dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
       allocation_pools:
@@ -62,12 +72,12 @@ resources:
   prv_subnet:
     type: OS::Neutron::Subnet
     properties:
-      network_id: { get_resource: cluster_network }
+      network_id: { get_resource: prv_network }
       cidr: 10.75.20.0/24
       dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
       allocation_pools:
-        - start: 10.75.10.2
-          end: 10.75.10.253
+        - start: 10.75.20.2
+          end: 10.75.20.253
 
   router:
     type: OS::Neutron::Router
@@ -79,7 +89,7 @@ resources:
     type: OS::Neutron::RouterInterface
     properties:
       router_id: { get_resource: router }
-      subnet_id: { get_resource: cluster_subnet }
+      subnet_id: { get_resource: ext_subnet }
 
   cluster_sg:
     type: OS::Neutron::SecurityGroup
@@ -126,9 +136,6 @@ resources:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
-            system_info:
-              default_user:
-                  name: { get_param: admin_username }
             write_files:
             - path: /opt/clusterware/etc/config.yml
               permissions: '0640'
@@ -149,23 +156,11 @@ resources:
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
            
-  login1:
-    type: OS::Nova::Server
-    properties:
-      name: login1
-      image: { get_param: cluster_type }
-      flavor: { get_param: compute_flavour }
-      key_name: { get_param: admin_key }
-      networks:
-        - port: { get_resource: login1_port }
-      user_data_format: RAW
-      user_data: { get_resource: master_config }
-
-  login1_port:
+  login1_ext_port:
     type: OS::Neutron::Port
-    depends_on: cluster_subnet
+    depends_on: ext_subnet
     properties:
-      network_id: { get_resource: cluster_network }
+      network_id: { get_resource: ext_network }
       fixed_ips:
         - subnet_id: { get_resource: ext_subnet }
 
@@ -174,7 +169,23 @@ resources:
     depends_on: router
     properties:
       floating_network: public
-      port_id: { get_resource: login1_port }
+      port_id: { get_resource: login1_ext_port }
+
+  login1:
+    type: OS::Nova::Server
+    properties:
+      name: login1
+      image: { get_param: cluster_type }
+      flavor: { get_param: compute_flavour }
+      key_name: { get_param: admin_key }
+      networks:
+        - port: { get_resource: login1_ext_port }
+        - network: 
+            get_resource: build_network
+        - network:
+            get_resource: prv_network
+      user_data_format: RAW
+      user_data: { get_resource: master_config }
 
   compute_group:
     type: OS::Heat::ResourceGroup
@@ -188,7 +199,11 @@ resources:
           image: { get_param: cluster_type }
           user_data_format: RAW
           user_data: { get_resource: node_config }
-          networks: [{ network: { get_resource: cluster_network } }]
+          networks: [
+              { network: { get_resource: ext_network } },
+              { network: { get_resource: build_network } },
+              { network: { get_resource: prv_network } }
+          ]
 
 outputs:
   login1_public_ip:
