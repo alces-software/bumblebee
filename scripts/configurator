@@ -98,9 +98,9 @@ interfaceconfig.each do |interface,info|
   intconfig.puts "DEVICE=\"#{intname}\"\n"
   if ipaddr.nil?
     intconfig.puts "BOOTPROTO=\"dhcp\"\n"
-    intconfig.puts "IPADDR=\"#{ipaddr}\"\n"
   else
     intconfig.puts "BOOTPROTO=\"none\"\n"
+    intconfig.puts "IPADDR=\"#{ipaddr}\"\n"
   end
   intconfig.puts "ONBOOT=\"yes\"\n"
   intconfig.puts "TYPE=\"Ethernet\"\n"
