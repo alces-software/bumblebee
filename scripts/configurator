@@ -116,7 +116,7 @@ interfaceconfig.each do |interface,info|
 
   # Bring up each interface
   intwait = `while [ ! "$(ip addr | grep "#{intname}")" ]; do sleep 1; done`
-  intup = `ifup #{intname}`
+  intup = `systemctl restart network`
   system(intwait)
   system(intup)
 end
