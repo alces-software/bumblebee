@@ -26,34 +26,27 @@ parameters:
     constraints:
     - custom_constraint: nova.flavor
 
-  compute_number:
-    type: number
-    label: Number of compute nodes
-    description: Number of compute nodes to deploy
-    default: 1
-
 resources:
   ext_network:
     type: OS::Neutron::Net
     properties:
-      name: { get_param: 'OS::stack_name' }
+      name: ext
 
   build_network:
     type: OS::Neutron::Net
     properties:
-      name: { get_param: 'OS::stack_name' }
+      name: build
 
   prv_network:
     type: OS::Neutron::Net
     properties:
-      name: { get_param: 'OS::stack_name' }
+      name: prv
 
   ext_subnet:
     type: OS::Neutron::Subnet
     properties:
       network_id: { get_resource: ext_network }
       cidr: 10.75.0.0/24
-      gateway_ip: 10.75.0.254
       dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
       allocation_pools:
         - start: 10.75.0.2
@@ -120,20 +113,20 @@ resources:
                     interfaces:
                       eth1:
                         name: eth1
-                        ipaddr: 10.75.10.10
+                        ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
                         subnetname: %CLUSTER_NAME%-build 
                       eth2:
                         name: eth2
-                        ipaddr: 10.75.20.10
+                        ipaddr:
                         netmask: 255.255.255.0
                         subnetname: %CLUSTER_NAME%-prv 
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
 
-  node_config:
+  node01_config:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
@@ -151,13 +144,13 @@ resources:
                     interfaces:
                       eth1:
                         name: eth1
-                        ipaddr: 10.75.10.11
+                        ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
                         subnetname: %CLUSTER_NAME%-build 
                       eth2:
                         name: eth2
-                        ipaddr: 10.75.20.11
+                        ipaddr:
                         netmask: 255.255.255.0
                         subnetname: %CLUSTER_NAME%-prv 
 
@@ -172,12 +165,52 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: ext_subnet }
 
+  login1_build_port:
+    type: OS::Neutron::Port
+    depends_on: build_subnet
+    properties:
+      network_id: { get_resource: build_network }
+      fixed_ips:
+        - subnet_id: { get_resource: build_subnet }
+
+  login1_prv_port:
+    type: OS::Neutron::Port
+    depends_on: prv_subnet
+    properties:
+      network_id: { get_resource: prv_network }
+      fixed_ips:
+        - subnet_id: { get_resource: prv_subnet }
+
   login1_access:
     type: OS::Neutron::FloatingIP
     depends_on: router
     properties:
       floating_network: public
       port_id: { get_resource: login1_ext_port }
+
+  node01_ext_port:
+    type: OS::Neutron::Port
+    depends_on: ext_subnet
+    properties:
+      network_id: { get_resource: ext_network }
+      fixed_ips:
+        - subnet_id: { get_resource: ext_subnet }
+
+  node01_build_port:
+    type: OS::Neutron::Port
+    depends_on: build_subnet
+    properties:
+      network_id: { get_resource: build_network }
+      fixed_ips:
+        - subnet_id: { get_resource: build_subnet }
+
+  node01_prv_port:
+    type: OS::Neutron::Port
+    depends_on: prv_subnet
+    properties:
+      network_id: { get_resource: prv_network }
+      fixed_ips:
+        - subnet_id: { get_resource: prv_subnet }
 
   login1:
     type: OS::Nova::Server
@@ -188,31 +221,24 @@ resources:
       key_name: { get_param: admin_key }
       networks:
         - port: { get_resource: login1_ext_port }
-        - network: 
-            get_resource: build_network
-        - network:
-            get_resource: prv_network
+        - port: { get_resource: login1_build_port }
+        - port: { get_resource: login1_prv_port }
       user_data_format: RAW
       user_data: { get_resource: master_config }
 
-  compute_group:
-    type: OS::Heat::ResourceGroup
+  node01:
+    type: OS::Nova::Server
     properties:
-      count: { get_param: compute_number }
-      resource_def:
-        type: OS::Nova::Server
-        properties:
-          name: node0%index%
-          flavor: { get_param: compute_flavour }
-          image: { get_param: cluster_type }
-          key_name: { get_param: admin_key }
-          user_data_format: RAW
-          user_data: { get_resource: node_config }
-          networks: [
-              { network: { get_resource: ext_network } },
-              { network: { get_resource: build_network } },
-              { network: { get_resource: prv_network } }
-          ]
+      name: node01
+      image: { get_param: cluster_type }
+      flavor: { get_param: compute_flavour }
+      key_name: { get_param: admin_key }
+      networks:
+        - port: { get_resource: node01_ext_port }
+        - port: { get_resource: node01_build_port }
+        - port: { get_resource: node01_prv_port }
+      user_data_format: RAW
+      user_data: { get_resource: node01_config }
 
 outputs:
   login1_public_ip:
