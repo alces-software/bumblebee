@@ -8,6 +8,7 @@
 require 'yaml'
 require 'net/http'
 require 'aws-sdk'
+require 'socket'
 
 # Collect instance information
 metadata_endpoint = 'http://169.254.169.254/latest/meta-data/'
@@ -122,4 +123,12 @@ interfaceconfig.each do |interface,info|
   intup = `systemctl restart network`
   system(intwait)
   system(intup)
+
+  if ipaddr.nil?
+    checkdevice = deviceindex + 1
+    dhcpip = Socket.ip_address_list[checkdevice].ip_address
+    puts "#{intname} found IP address #{dhcpip} on #{subnetname}"
+  end
 end
+
+printf "Bumblebee configurator finished\n"
