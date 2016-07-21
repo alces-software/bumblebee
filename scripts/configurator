@@ -89,11 +89,6 @@ interfaceconfig.each do |interface,info|
 
   if ipaddr.to_s.empty?
     printf "Configuring interface #{intname} on #{subnetname}\n"
-    instanceconfig = YAML.load_file("/opt/bumblebee/etc/instance.yml")
-    interfaceinfo = {
-      "#{intname}"=> { "attachment_id"=>"#{attachment_id}",
-                       "network_interface_id"=>"#{network_interface_id}" }
-    }
   else
     printf "Configuring interface #{intname} as #{ipaddr} on #{subnetname}\n"
   end
