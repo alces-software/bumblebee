@@ -29,7 +29,6 @@ elsif platform["Not Found"]
   instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'local-ipv4' ) )
 end
 
-
 config = YAML.load_file("/opt/bumblebee/etc/cluster.yml")
 interfaceconfig = config['interfaces']
 clusterconfig = config['instance']
@@ -48,7 +47,7 @@ interfaceconfig.each do |interface,info|
 
   fqdn = "#{nodename}.#{cluster}.#{domain}"
 
-  if primary_interface.nil?
+  if primary_interface.to_s.empty?
   elsif primary_interface == true
     puts "Configuring #{instance_id} as #{fqdn} with primary interface #{intname}"
     sethn = `hostnamectl set-hostname #{fqdn}`
@@ -88,8 +87,13 @@ interfaceconfig.each do |interface,info|
 
   printf "Found interface #{intname}\n"
 
-  if ipaddr.nil?
+  if ipaddr.to_s.empty?
     printf "Configuring interface #{intname} on #{subnetname}\n"
+    instanceconfig = YAML.load_file("/opt/bumblebee/etc/instance.yml")
+    interfaceinfo = {
+      "#{intname}"=> { "attachment_id"=>"#{attachment_id}",
+                       "network_interface_id"=>"#{network_interface_id}" }
+    }
   else
     printf "Configuring interface #{intname} as #{ipaddr} on #{subnetname}\n"
   end
@@ -103,7 +107,7 @@ interfaceconfig.each do |interface,info|
   intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
 
   intconfig.puts "DEVICE=\"#{intname}\"\n"
-  if ipaddr.nil?
+  if ipaddr.to_s.empty?
     intconfig.puts "BOOTPROTO=\"dhcp\"\n"
     intconfig.puts "PEERDNS=\"no\"\n"
     intconfig.puts "PEERROUTES=\"no\"\n"
@@ -124,11 +128,6 @@ interfaceconfig.each do |interface,info|
   system(intwait)
   system(intup)
 
-  if ipaddr.nil?
-    checkdevice = deviceindex + 1
-    dhcpip = Socket.ip_address_list[checkdevice].ip_address
-    puts "#{intname} found IP address #{dhcpip} on #{subnetname}"
-  end
 end
 
 printf "Bumblebee configurator finished\n"
