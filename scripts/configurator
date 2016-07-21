@@ -47,18 +47,6 @@ interfaceconfig.each do |interface,info|
 
   fqdn = "#{nodename}.#{cluster}.#{domain}"
 
-  if primary_interface.to_s.empty?
-  elsif primary_interface == true
-    puts "Configuring #{instance_id} as #{fqdn} with primary interface #{intname}"
-    sethn = `hostnamectl set-hostname #{fqdn}`
-    sethntrans = `hostnamectl set-hostname --transient #{fqdn}`
-    system(sethn)
-    system(sethntrans)
-    open('/etc/hosts', 'a') { |w|
-      w.puts "#{ipaddr} #{fqdn} #{nodename}"
-    }
-  end
-
   if platform == 'aws'
     createint = ec2.create_network_interface({
       subnet_id: subnetid,
@@ -122,6 +110,25 @@ interfaceconfig.each do |interface,info|
   intup = `systemctl restart network`
   system(intwait)
   system(intup)
+
+  if primary_interface.to_s.empty?
+  elsif primary_interface == true
+    puts "Configuring #{instance_id} as #{fqdn} with primary interface #{intname}"
+    sethn = `hostnamectl set-hostname #{fqdn}`
+    sethntrans = `hostnamectl set-hostname --transient #{fqdn}`
+    system(sethn)
+    system(sethntrans)
+    if ipaddr.to_s.empty?
+      dhcpip = `ifconfig #{intname} | grep "inet" | awk 'NR==1{print $2}'`
+      open('/etc/hosts', 'a') { |w|
+        w.puts "#{dhcpip.to_s.chomp} #{fqdn.to_s.chomp} #{nodename.to_s.chomp}"
+      }
+    else
+      open('/etc/hosts', 'a') { |w|
+        w.puts "#{ipaddr} #{fqdn} #{nodename}"
+      }
+    end
+  end
 
 end
 
