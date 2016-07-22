@@ -18,6 +18,14 @@ parameters:
     constraints:
     - custom_constraint: glance.image
 
+  directory_flavour:
+    type: string
+    label: >
+      Directory instance flavour
+    description: Directory instance type
+    constraints:
+    - custom_constraint: nova.flavor
+
   compute_flavour:
     type: string
     label: >
@@ -187,6 +195,68 @@ resources:
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+
+  node02_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+            write_files:
+            - path: /opt/bumblebee/etc/cluster.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    instance:
+                      cluster: '%CLUSTER_NAME%'
+                      domain: alces.cluster
+                      profile: node02
+                    interfaces:
+                      eth1:
+                        name: eth1
+                        ipaddr: 10.75.10.22
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: %CLUSTER_NAME%-build
+                      eth2:
+                        name: eth2
+                        ipaddr: 10.75.10.22
+                        netmask: 255.255.255.0
+                        subnetname: %CLUSTER_NAME%-prv
+
+                  params:
+                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+
+  node03_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+            write_files:
+            - path: /opt/bumblebee/etc/cluster.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    instance:
+                      cluster: '%CLUSTER_NAME%'
+                      domain: alces.cluster
+                      profile: node03
+                    interfaces:
+                      eth1:
+                        name: eth1
+                        ipaddr: 10.75.10.23
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: %CLUSTER_NAME%-build
+                      eth2:
+                        name: eth2
+                        ipaddr: 10.75.10.23
+                        netmask: 255.255.255.0
+                        subnetname: %CLUSTER_NAME%-prv
+
+                  params:
+                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
            
   login1_ext_port:
     type: OS::Neutron::Port
@@ -273,12 +343,64 @@ resources:
         - subnet_id: { get_resource: prv_subnet }
           ip_address: 10.75.20.21
 
+  node02_ext_port:
+    type: OS::Neutron::Port
+    depends_on: ext_subnet
+    properties:
+      network_id: { get_resource: ext_network }
+      fixed_ips:
+        - subnet_id: { get_resource: ext_subnet }
+
+  node02_build_port:
+    type: OS::Neutron::Port
+    depends_on: build_subnet
+    properties:
+      network_id: { get_resource: build_network }
+      fixed_ips:
+        - subnet_id: { get_resource: build_subnet }
+          ip_address: 10.75.10.22
+
+  node02_prv_port:
+    type: OS::Neutron::Port
+    depends_on: prv_subnet
+    properties:
+      network_id: { get_resource: prv_network }
+      fixed_ips:
+        - subnet_id: { get_resource: prv_subnet }
+          ip_address: 10.75.20.22
+
+  node03_ext_port:
+    type: OS::Neutron::Port
+    depends_on: ext_subnet
+    properties:
+      network_id: { get_resource: ext_network }
+      fixed_ips:
+        - subnet_id: { get_resource: ext_subnet }
+
+  node03_build_port:
+    type: OS::Neutron::Port
+    depends_on: build_subnet
+    properties:
+      network_id: { get_resource: build_network }
+      fixed_ips:
+        - subnet_id: { get_resource: build_subnet }
+          ip_address: 10.75.10.23
+
+  node03_prv_port:
+    type: OS::Neutron::Port
+    depends_on: prv_subnet
+    properties:
+      network_id: { get_resource: prv_network }
+      fixed_ips:
+        - subnet_id: { get_resource: prv_subnet }
+          ip_address: 10.75.20.23
+
   directory:
     type: OS::Nova::Server
     properties:
       name: directory
       image: { get_param: cluster_type }
-      flavor: { get_param: compute_flavour }
+      flavor: { get_param: directory_flavour }
       key_name: { get_param: admin_key }
       networks:
         - port: { get_resource: directory_ext_port }
@@ -314,6 +436,34 @@ resources:
         - port: { get_resource: node01_prv_port }
       user_data_format: RAW
       user_data: { get_resource: node01_config }
+
+  node02:
+    type: OS::Nova::Server
+    properties:
+      name: node01
+      image: { get_param: cluster_type }
+      flavor: { get_param: compute_flavour }
+      key_name: { get_param: admin_key }
+      networks:
+        - port: { get_resource: node02_ext_port }
+        - port: { get_resource: node02_build_port }
+        - port: { get_resource: node02_prv_port }
+      user_data_format: RAW
+      user_data: { get_resource: node02_config }
+
+  node03:
+    type: OS::Nova::Server
+    properties:
+      name: node01
+      image: { get_param: cluster_type }
+      flavor: { get_param: compute_flavour }
+      key_name: { get_param: admin_key }
+      networks:
+        - port: { get_resource: node03_ext_port }
+        - port: { get_resource: node03_build_port }
+        - port: { get_resource: node03_prv_port }
+      user_data_format: RAW
+      user_data: { get_resource: node03_config }
 
 outputs:
   login1_public_ip:
