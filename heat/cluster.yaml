@@ -440,7 +440,7 @@ resources:
   node02:
     type: OS::Nova::Server
     properties:
-      name: node01
+      name: node02
       image: { get_param: cluster_type }
       flavor: { get_param: compute_flavour }
       key_name: { get_param: admin_key }
@@ -454,7 +454,7 @@ resources:
   node03:
     type: OS::Nova::Server
     properties:
-      name: node01
+      name: node03
       image: { get_param: cluster_type }
       flavor: { get_param: compute_flavour }
       key_name: { get_param: admin_key }
