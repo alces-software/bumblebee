@@ -40,11 +40,6 @@ resources:
     properties:
       name: ext
 
-  build_network:
-    type: OS::Neutron::Net
-    properties:
-      name: build
-
   prv_network:
     type: OS::Neutron::Net
     properties:
@@ -60,25 +55,15 @@ resources:
         - start: 10.75.0.2
           end: 10.75.0.253
 
-  build_subnet:
+  prv_subnet:
     type: OS::Neutron::Subnet
     properties:
-      network_id: { get_resource: build_network }
+      network_id: { get_resource: prv_network }
       cidr: 10.75.10.0/24
       dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
       allocation_pools:
         - start: 10.75.10.2
           end: 10.75.10.253
-
-  prv_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      network_id: { get_resource: prv_network }
-      cidr: 10.75.20.0/24
-      dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
-      allocation_pools:
-        - start: 10.75.20.2
-          end: 10.75.20.253
 
   router:
     type: OS::Neutron::Router
@@ -115,21 +100,9 @@ resources:
                 str_replace:
                   template: |
                     instance:
-                      cluster: '%CLUSTER_NAME%'
-                      domain: alces.cluster
+                      domain: bedrock.alces.cluster
                       profile: directory
                     interfaces:
-                      eth1:
-                        name: eth1
-                        ipaddr: 10.75.10.254
-                        netmask: 255.255.255.0
-                        primary_interface: true
-                        subnetname: %CLUSTER_NAME%-build
-                      eth2:
-                        name: eth2
-                        ipaddr: 10.75.10.254
-                        netmask: 255.255.255.0
-                        subnetname: %CLUSTER_NAME%-prv
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -147,20 +120,9 @@ resources:
                   template: |
                     instance:
                       cluster: '%CLUSTER_NAME%'
-                      domain: alces.cluster
+                      domain: bedrock.alces.cluster
                       profile: login1
                     interfaces:
-                      eth1:
-                        name: eth1
-                        ipaddr: 10.75.10.10
-                        netmask: 255.255.255.0
-                        primary_interface: true
-                        subnetname: %CLUSTER_NAME%-build
-                      eth2:
-                        name: eth2
-                        ipaddr: 10.75.10.10
-                        netmask: 255.255.255.0
-                        subnetname: %CLUSTER_NAME%-prv
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -178,19 +140,14 @@ resources:
                   template: |
                     instance:
                       cluster: '%CLUSTER_NAME%'
-                      domain: alces.cluster
+                      domain: bedrock.alces.cluster
                       profile: node01
                     interfaces:
                       eth1:
                         name: eth1
-                        ipaddr: 10.75.10.21
+                        ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-build
-                      eth2:
-                        name: eth2
-                        ipaddr: 10.75.10.21
-                        netmask: 255.255.255.0
                         subnetname: %CLUSTER_NAME%-prv
 
                   params:
@@ -209,19 +166,14 @@ resources:
                   template: |
                     instance:
                       cluster: '%CLUSTER_NAME%'
-                      domain: alces.cluster
+                      domain: bedrock.alces.cluster
                       profile: node02
                     interfaces:
                       eth1:
                         name: eth1
-                        ipaddr: 10.75.10.22
+                        ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-build
-                      eth2:
-                        name: eth2
-                        ipaddr: 10.75.10.22
-                        netmask: 255.255.255.0
                         subnetname: %CLUSTER_NAME%-prv
 
                   params:
@@ -240,19 +192,14 @@ resources:
                   template: |
                     instance:
                       cluster: '%CLUSTER_NAME%'
-                      domain: alces.cluster
+                      domain: bedrock.alces.cluster
                       profile: node03
                     interfaces:
                       eth1:
                         name: eth1
-                        ipaddr: 10.75.10.23
+                        ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-build
-                      eth2:
-                        name: eth2
-                        ipaddr: 10.75.10.23
-                        netmask: 255.255.255.0
                         subnetname: %CLUSTER_NAME%-prv
 
                   params:
@@ -266,15 +213,6 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: ext_subnet }
 
-  login1_build_port:
-    type: OS::Neutron::Port
-    depends_on: build_subnet
-    properties:
-      network_id: { get_resource: build_network }
-      fixed_ips:
-        - subnet_id: { get_resource: build_subnet }
-          ip_address: 10.75.10.10
-
   login1_prv_port:
     type: OS::Neutron::Port
     depends_on: prv_subnet
@@ -282,7 +220,6 @@ resources:
       network_id: { get_resource: prv_network }
       fixed_ips:
         - subnet_id: { get_resource: prv_subnet }
-          ip_address: 10.75.20.10
 
   login1_access:
     type: OS::Neutron::FloatingIP
@@ -299,24 +236,6 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: ext_subnet }
 
-  directory_build_port:
-    type: OS::Neutron::Port
-    depends_on: build_subnet
-    properties:
-      network_id: { get_resource: build_network }
-      fixed_ips:
-        - subnet_id: { get_resource: build_subnet }
-          ip_address: 10.75.10.254
-
-  directory_prv_port:
-    type: OS::Neutron::Port
-    depends_on: prv_subnet
-    properties:
-      network_id: { get_resource: prv_network }
-      fixed_ips:
-        - subnet_id: { get_resource: prv_subnet }
-          ip_address: 10.75.20.254
-
   node01_ext_port:
     type: OS::Neutron::Port
     depends_on: ext_subnet
@@ -325,15 +244,6 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: ext_subnet }
 
-  node01_build_port:
-    type: OS::Neutron::Port
-    depends_on: build_subnet
-    properties:
-      network_id: { get_resource: build_network }
-      fixed_ips:
-        - subnet_id: { get_resource: build_subnet }
-          ip_address: 10.75.10.21
-
   node01_prv_port:
     type: OS::Neutron::Port
     depends_on: prv_subnet
@@ -341,7 +251,6 @@ resources:
       network_id: { get_resource: prv_network }
       fixed_ips:
         - subnet_id: { get_resource: prv_subnet }
-          ip_address: 10.75.20.21
 
   node02_ext_port:
     type: OS::Neutron::Port
@@ -351,15 +260,6 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: ext_subnet }
 
-  node02_build_port:
-    type: OS::Neutron::Port
-    depends_on: build_subnet
-    properties:
-      network_id: { get_resource: build_network }
-      fixed_ips:
-        - subnet_id: { get_resource: build_subnet }
-          ip_address: 10.75.10.22
-
   node02_prv_port:
     type: OS::Neutron::Port
     depends_on: prv_subnet
@@ -367,7 +267,6 @@ resources:
       network_id: { get_resource: prv_network }
       fixed_ips:
         - subnet_id: { get_resource: prv_subnet }
-          ip_address: 10.75.20.22
 
   node03_ext_port:
     type: OS::Neutron::Port
@@ -377,15 +276,6 @@ resources:
       fixed_ips:
         - subnet_id: { get_resource: ext_subnet }
 
-  node03_build_port:
-    type: OS::Neutron::Port
-    depends_on: build_subnet
-    properties:
-      network_id: { get_resource: build_network }
-      fixed_ips:
-        - subnet_id: { get_resource: build_subnet }
-          ip_address: 10.75.10.23
-
   node03_prv_port:
     type: OS::Neutron::Port
     depends_on: prv_subnet
@@ -393,7 +283,6 @@ resources:
       network_id: { get_resource: prv_network }
       fixed_ips:
         - subnet_id: { get_resource: prv_subnet }
-          ip_address: 10.75.20.23
 
   directory:
     type: OS::Nova::Server
@@ -404,8 +293,6 @@ resources:
       key_name: { get_param: admin_key }
       networks:
         - port: { get_resource: directory_ext_port }
-        - port: { get_resource: directory_build_port }
-        - port: { get_resource: directory_prv_port }
       user_data_format: RAW
       user_data: { get_resource: directory_config }
 
@@ -418,7 +305,6 @@ resources:
       key_name: { get_param: admin_key }
       networks:
         - port: { get_resource: login1_ext_port }
-        - port: { get_resource: login1_build_port }
         - port: { get_resource: login1_prv_port }
       user_data_format: RAW
       user_data: { get_resource: master_config }
@@ -432,7 +318,6 @@ resources:
       key_name: { get_param: admin_key }
       networks:
         - port: { get_resource: node01_ext_port }
-        - port: { get_resource: node01_build_port }
         - port: { get_resource: node01_prv_port }
       user_data_format: RAW
       user_data: { get_resource: node01_config }
@@ -446,7 +331,6 @@ resources:
       key_name: { get_param: admin_key }
       networks:
         - port: { get_resource: node02_ext_port }
-        - port: { get_resource: node02_build_port }
         - port: { get_resource: node02_prv_port }
       user_data_format: RAW
       user_data: { get_resource: node02_config }
@@ -460,7 +344,6 @@ resources:
       key_name: { get_param: admin_key }
       networks:
         - port: { get_resource: node03_ext_port }
-        - port: { get_resource: node03_build_port }
         - port: { get_resource: node03_prv_port }
       user_data_format: RAW
       user_data: { get_resource: node03_config }
