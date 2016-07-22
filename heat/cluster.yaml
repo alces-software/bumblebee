@@ -95,6 +95,37 @@ resources:
         port_range_min: 22
         port_range_max: 22
 
+  directory_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+            write_files:
+            - path: /opt/bumblebee/etc/cluster.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    instance:
+                      cluster: '%CLUSTER_NAME%'
+                      domain: alces.cluster
+                      profile: directory
+                    interfaces:
+                      eth1:
+                        name: eth1
+                        ipaddr: 10.75.10.254
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: %CLUSTER_NAME%-build
+                      eth2:
+                        name: eth2
+                        ipaddr: 10.75.10.254
+                        netmask: 255.255.255.0
+                        subnetname: %CLUSTER_NAME%-prv
+
+                  params:
+                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+
   master_config:
     type: OS::Heat::CloudConfig
     properties:
@@ -113,15 +144,15 @@ resources:
                     interfaces:
                       eth1:
                         name: eth1
-                        ipaddr:
+                        ipaddr: 10.75.10.10
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-build 
+                        subnetname: %CLUSTER_NAME%-build
                       eth2:
                         name: eth2
-                        ipaddr:
+                        ipaddr: 10.75.10.10
                         netmask: 255.255.255.0
-                        subnetname: %CLUSTER_NAME%-prv 
+                        subnetname: %CLUSTER_NAME%-prv
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -144,15 +175,15 @@ resources:
                     interfaces:
                       eth1:
                         name: eth1
-                        ipaddr:
+                        ipaddr: 10.75.10.21
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-build 
+                        subnetname: %CLUSTER_NAME%-build
                       eth2:
                         name: eth2
-                        ipaddr:
+                        ipaddr: 10.75.10.21
                         netmask: 255.255.255.0
-                        subnetname: %CLUSTER_NAME%-prv 
+                        subnetname: %CLUSTER_NAME%-prv
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -172,6 +203,7 @@ resources:
       network_id: { get_resource: build_network }
       fixed_ips:
         - subnet_id: { get_resource: build_subnet }
+          ip_address: 10.75.10.10
 
   login1_prv_port:
     type: OS::Neutron::Port
@@ -180,6 +212,7 @@ resources:
       network_id: { get_resource: prv_network }
       fixed_ips:
         - subnet_id: { get_resource: prv_subnet }
+          ip_address: 10.75.20.10
 
   login1_access:
     type: OS::Neutron::FloatingIP
@@ -187,6 +220,32 @@ resources:
     properties:
       floating_network: public
       port_id: { get_resource: login1_ext_port }
+
+  directory_ext_port:
+    type: OS::Neutron::Port
+    depends_on: ext_subnet
+    properties:
+      network_id: { get_resource: ext_network }
+      fixed_ips:
+        - subnet_id: { get_resource: ext_subnet }
+
+  directory_build_port:
+    type: OS::Neutron::Port
+    depends_on: build_subnet
+    properties:
+      network_id: { get_resource: build_network }
+      fixed_ips:
+        - subnet_id: { get_resource: build_subnet }
+          ip_address: 10.75.10.254
+
+  directory_prv_port:
+    type: OS::Neutron::Port
+    depends_on: prv_subnet
+    properties:
+      network_id: { get_resource: prv_network }
+      fixed_ips:
+        - subnet_id: { get_resource: prv_subnet }
+          ip_address: 10.75.20.254
 
   node01_ext_port:
     type: OS::Neutron::Port
@@ -203,6 +262,7 @@ resources:
       network_id: { get_resource: build_network }
       fixed_ips:
         - subnet_id: { get_resource: build_subnet }
+          ip_address: 10.75.10.21
 
   node01_prv_port:
     type: OS::Neutron::Port
@@ -211,6 +271,21 @@ resources:
       network_id: { get_resource: prv_network }
       fixed_ips:
         - subnet_id: { get_resource: prv_subnet }
+          ip_address: 10.75.20.21
+
+  directory:
+    type: OS::Nova::Server
+    properties:
+      name: directory
+      image: { get_param: cluster_type }
+      flavor: { get_param: compute_flavour }
+      key_name: { get_param: admin_key }
+      networks:
+        - port: { get_resource: directory_ext_port }
+        - port: { get_resource: directory_build_port }
+        - port: { get_resource: directory_prv_port }
+      user_data_format: RAW
+      user_data: { get_resource: directory_config }
 
   login1:
     type: OS::Nova::Server
