@@ -12,14 +12,14 @@ require 'socket'
 
 # Collect instance information
 metadata_endpoint = 'http://169.254.169.254/latest/meta-data/'
-platform = Net::HTTP.get( URI.parse ( metadata_endpoint + 'network/' ) )
+platform = Net::HTTP.get(URI.parse(metadata_endpoint + 'network/'))
 
 if platform["interfaces/"]
 
   platform = 'aws'
-  instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'instance-id' ) )
+  instance_id = Net::HTTP.get(URI.parse(metadata_endpoint + 'instance-id' ))
   puts "Found instance ID: #{instance_id}"
-  getregion = Net::HTTP.get( URI.parse( metadata_endpoint + 'placement/availability-zone' ) )
+  getregion = Net::HTTP.get(URI.parse(metadata_endpoint + 'placement/availability-zone'))
   region = getregion[0..-2]
   puts "Found AWS region: #{region}"
 
@@ -28,20 +28,20 @@ if platform["interfaces/"]
   Aws.config[:credentials] = Aws::InstanceProfileCredentials.new
   ec2 = Aws::EC2::Client.new
 
-elsif platform["Not Found"]
+elsif platform['Not Found']
 
   platform = 'openstack'
-  instance_id = Net::HTTP.get( URI.parse( metadata_endpoint + 'local-ipv4' ) )
+  instance_id = Net::HTTP.get(URI.parse(metadata_endpoint + 'local-ipv4' ))
 
 end
 
-config = YAML.load_file("/opt/bumblebee/etc/cluster.yml")
+config = YAML.load_file('/opt/bumblebee/etc/cluster.yml')
 interfaceconfig = config['interfaces']
 clusterconfig = config['instance']
 
-nodename = clusterconfig["profile"]
-domain = clusterconfig["domain"]
-cluster = clusterconfig["cluster"]
+nodename = clusterconfig['profile']
+domain = clusterconfig['domain']
+cluster = clusterconfig['cluster']
 
 if cluster.to_s.empty?
   fqdn = "#{nodename}.#{domain}"
@@ -49,11 +49,11 @@ else
   fqdn = "#{nodename}.#{cluster}.#{domain}"
 end
 
-if interfaceconfig.to_s.nil?
+if interfaceconfig.nil?
 
   puts "No additional interfaces found. Setting default interface up"
 
-  eth0_ip = Net::HTTP.get( URI.parse( metadata_endpoint + 'local_ipv4' ) )
+  eth0_ip = Net::HTTP.get(URI.parse(metadata_endpoint + 'local-ipv4'))
 
   system `hostnamectl set-hostname #{fqdn}`
   system `hostnamectl set-hostname --transient #{fqdn}`
@@ -66,12 +66,12 @@ else
 
   interfaceconfig.each do |interface,info|
 
-    intname = info["name"]
-    ipaddr = info["ipaddr"]
-    netmask = info["netmask"]
-    subnetid = info["subnetid"]
-    subnetname = info["subnetname"]
-    primary_interface = info["primary_interface"]
+    intname = info['name']
+    ipaddr = info['ipaddr']
+    netmask = info['netmask']
+    subnetid = info['subnetid']
+    subnetname = info['subnetname']
+    primary_interface = info['primary_interface']
     deviceindex = intname.gsub(/[^0-9]/,"")
 
     if platform == 'aws'
