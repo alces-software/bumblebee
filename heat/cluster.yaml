@@ -18,14 +18,6 @@ parameters:
     constraints:
     - custom_constraint: glance.image
 
-  directory_flavour:
-    type: string
-    label: >
-      Directory instance flavour
-    description: Directory instance type
-    constraints:
-    - custom_constraint: nova.flavor
-
   compute_flavour:
     type: string
     label: >
@@ -35,25 +27,10 @@ parameters:
     - custom_constraint: nova.flavor
 
 resources:
-  ext_network:
-    type: OS::Neutron::Net
-    properties:
-      name: ext
-
   prv_network:
     type: OS::Neutron::Net
     properties:
       name: prv
-
-  ext_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      network_id: { get_resource: ext_network }
-      cidr: 10.75.0.0/24
-      dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
-      allocation_pools:
-        - start: 10.75.0.2
-          end: 10.75.0.253
 
   prv_subnet:
     type: OS::Neutron::Subnet
@@ -65,18 +42,6 @@ resources:
         - start: 10.75.10.2
           end: 10.75.10.253
 
-  router:
-    type: OS::Neutron::Router
-    properties:
-      external_gateway_info:
-        network: public
-
-  router_interface:
-    type: OS::Neutron::RouterInterface
-    properties:
-      router_id: { get_resource: router }
-      subnet_id: { get_resource: ext_subnet }
-
   cluster_sg:
     type: OS::Neutron::SecurityGroup
     properties:
@@ -87,25 +52,6 @@ resources:
       - protocol: tcp
         port_range_min: 22
         port_range_max: 22
-
-  directory_config:
-    type: OS::Heat::CloudConfig
-    properties:
-      cloud_config:
-            write_files:
-            - path: /opt/bumblebee/etc/cluster.yml
-              permissions: '0640'
-              owner: root:root
-              content:
-                str_replace:
-                  template: |
-                    instance:
-                      domain: bedrock.alces.cluster
-                      profile: directory
-                    interfaces:
-
-                  params:
-                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
 
   master_config:
     type: OS::Heat::CloudConfig
@@ -123,6 +69,12 @@ resources:
                       domain: bedrock.alces.cluster
                       profile: login1
                     interfaces:
+                      eth1:
+                        name: eth1
+                        ipaddr:
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: %CLUSTER_NAME%-prv
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -228,14 +180,6 @@ resources:
       floating_network: public
       port_id: { get_resource: login1_ext_port }
 
-  directory_ext_port:
-    type: OS::Neutron::Port
-    depends_on: ext_subnet
-    properties:
-      network_id: { get_resource: ext_network }
-      fixed_ips:
-        - subnet_id: { get_resource: ext_subnet }
-
   node01_ext_port:
     type: OS::Neutron::Port
     depends_on: ext_subnet
@@ -283,18 +227,6 @@ resources:
       network_id: { get_resource: prv_network }
       fixed_ips:
         - subnet_id: { get_resource: prv_subnet }
-
-  directory:
-    type: OS::Nova::Server
-    properties:
-      name: directory
-      image: { get_param: cluster_type }
-      flavor: { get_param: directory_flavour }
-      key_name: { get_param: admin_key }
-      networks:
-        - port: { get_resource: directory_ext_port }
-      user_data_format: RAW
-      user_data: { get_resource: directory_config }
 
   login1:
     type: OS::Nova::Server
