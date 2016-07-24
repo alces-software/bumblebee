@@ -105,6 +105,7 @@ else
 
     intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
 
+    intconfig.puts "DEVICE=\"#{intname}\"\n"
     intconfig.puts "ONBOOT=\"yes\"\n"
     intconfig.puts "TYPE=\"Ethernet\"\n"
     if ipaddr.to_s.empty?
@@ -122,7 +123,7 @@ else
     intconfig.close
 
     intwait = `while [ ! "$(/sbin/ip addr | grep "#{intname}")" ]; do sleep 1; done`
-    intup = `systemctl restart network`
+    intup = `/sbin/ifup #{intname} > /dev/null`
     system(intwait)
     system(intup)
 
