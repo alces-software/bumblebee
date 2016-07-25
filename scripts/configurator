@@ -58,6 +58,9 @@ if interfaceconfig.nil?
   system `hostnamectl set-hostname #{fqdn}`
   system `hostnamectl set-hostname --transient #{fqdn}`
 
+  system `sed -i "/127.0.0.1 #{nodename}/d" /etc/hosts`
+  system `sed -i "/::1 #{nodename}/d" /etc/hosts`
+
   open('/etc/hosts', 'a') { |w|
     w.puts "#{eth0_ip} #{fqdn} #{nodename}"
   }
