@@ -26,6 +26,13 @@ parameters:
     constraints:
     - custom_constraint: nova.flavor
 
+  ext_network:
+    type: string
+    label: External network
+    description: Cluster infrastructure network
+    constraints:
+    - custom_constraint: neutron.network
+
 resources:
   prv_network:
     type: OS::Neutron::Net
@@ -159,74 +166,53 @@ resources:
            
   login1_ext_port:
     type: OS::Neutron::Port
-    depends_on: ext_subnet
     properties:
-      network_id: { get_resource: ext_network }
-      fixed_ips:
-        - subnet_id: { get_resource: ext_subnet }
+      network_id: { get_param: ext_network }
 
   login1_prv_port:
     type: OS::Neutron::Port
     depends_on: prv_subnet
     properties:
       network_id: { get_resource: prv_network }
-      fixed_ips:
-        - subnet_id: { get_resource: prv_subnet }
 
   login1_access:
     type: OS::Neutron::FloatingIP
-    depends_on: router
     properties:
       floating_network: public
       port_id: { get_resource: login1_ext_port }
 
   node01_ext_port:
     type: OS::Neutron::Port
-    depends_on: ext_subnet
     properties:
-      network_id: { get_resource: ext_network }
-      fixed_ips:
-        - subnet_id: { get_resource: ext_subnet }
+      network_id: { get_param: ext_network }
 
   node01_prv_port:
     type: OS::Neutron::Port
     depends_on: prv_subnet
     properties:
       network_id: { get_resource: prv_network }
-      fixed_ips:
-        - subnet_id: { get_resource: prv_subnet }
 
   node02_ext_port:
     type: OS::Neutron::Port
-    depends_on: ext_subnet
     properties:
-      network_id: { get_resource: ext_network }
-      fixed_ips:
-        - subnet_id: { get_resource: ext_subnet }
+      network_id: { get_param: ext_network }
 
   node02_prv_port:
     type: OS::Neutron::Port
     depends_on: prv_subnet
     properties:
       network_id: { get_resource: prv_network }
-      fixed_ips:
-        - subnet_id: { get_resource: prv_subnet }
 
   node03_ext_port:
     type: OS::Neutron::Port
-    depends_on: ext_subnet
     properties:
-      network_id: { get_resource: ext_network }
-      fixed_ips:
-        - subnet_id: { get_resource: ext_subnet }
+      network_id: { get_param: ext_network }
 
   node03_prv_port:
     type: OS::Neutron::Port
     depends_on: prv_subnet
     properties:
       network_id: { get_resource: prv_network }
-      fixed_ips:
-        - subnet_id: { get_resource: prv_subnet }
 
   login1:
     type: OS::Nova::Server
