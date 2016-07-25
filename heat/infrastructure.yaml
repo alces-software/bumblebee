@@ -27,12 +27,12 @@ parameters:
     - custom_constraint: nova.flavor
 
 resources:
-  ext_network:
+  prv_network:
     type: OS::Neutron::Net
     properties:
-      name: ext
+    name: { "Fn::Join": [ "", [ { get_param: 'OS::stack_name' }, "-prv" ] ] } 
 
-  ext_subnet:
+  prv_subnet:
     type: OS::Neutron::Subnet
     properties:
       network_id: { get_resource: ext_network }
@@ -84,20 +84,20 @@ resources:
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
 
-  directory_ext_port:
+  directory_prv_port:
     type: OS::Neutron::Port
     depends_on: ext_subnet
     properties:
-      network_id: { get_resource: ext_network }
+      network_id: { get_resource: prv_network }
       fixed_ips:
-        - subnet_id: { get_resource: ext_subnet }
+        - subnet_id: { get_resource: prv_subnet }
 
   directory_access:
     type: OS::Neutron::FloatingIP
     depends_on: router
     properties:
       floating_network: public
-      port_id: { get_resource: directory_ext_port }
+      port_id: { get_resource: directory_prv_port }
 
   directory:
     type: OS::Nova::Server
@@ -107,7 +107,7 @@ resources:
       flavor: { get_param: directory_flavour }
       key_name: { get_param: admin_key }
       networks:
-        - port: { get_resource: directory_ext_port }
+        - port: { get_resource: directory_prv_port }
       user_data_format: RAW
       user_data: { get_resource: directory_config }
 
