@@ -30,12 +30,12 @@ resources:
   prv_network:
     type: OS::Neutron::Net
     properties:
-    name: { "Fn::Join": [ "", [ { get_param: 'OS::stack_name' }, "-prv" ] ] } 
+      name: { "Fn::Join": [ "", [ { get_param: 'OS::stack_name' }, "-prv" ] ] }
 
   prv_subnet:
     type: OS::Neutron::Subnet
     properties:
-      network_id: { get_resource: ext_network }
+      network_id: { get_resource: prv_network }
       cidr: 10.75.0.0/24
       dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
       allocation_pools:
@@ -52,7 +52,7 @@ resources:
     type: OS::Neutron::RouterInterface
     properties:
       router_id: { get_resource: router }
-      subnet_id: { get_resource: ext_subnet }
+      subnet_id: { get_resource: prv_subnet }
 
   cluster_sg:
     type: OS::Neutron::SecurityGroup
@@ -86,7 +86,7 @@ resources:
 
   directory_prv_port:
     type: OS::Neutron::Port
-    depends_on: ext_subnet
+    depends_on: prv_subnet
     properties:
       network_id: { get_resource: prv_network }
       fixed_ips:

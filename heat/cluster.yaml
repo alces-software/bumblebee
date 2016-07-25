@@ -26,23 +26,23 @@ parameters:
     constraints:
     - custom_constraint: nova.flavor
 
-  ext_network:
+  prv_network:
     type: string
-    label: External network
-    description: Cluster infrastructure network
+    label: Private network
+    description: Cluster infrastructure private network
     constraints:
     - custom_constraint: neutron.network
 
 resources:
-  prv_network:
+  api_network:
     type: OS::Neutron::Net
     properties:
-      name: prv
+      name: { "Fn::Join": [ "", [ { get_param: 'OS::stack_name' }, "-api" ] ]  }  
 
-  prv_subnet:
+  api_subnet:
     type: OS::Neutron::Subnet
     properties:
-      network_id: { get_resource: prv_network }
+      network_id: { get_resource: api_network }
       cidr: 10.75.10.0/24
       dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
       allocation_pools:
@@ -81,7 +81,7 @@ resources:
                         ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-prv
+                        subnetname: %CLUSTER_NAME%-api
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -107,7 +107,7 @@ resources:
                         ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-prv
+                        subnetname: %CLUSTER_NAME%-api
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -133,7 +133,7 @@ resources:
                         ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-prv
+                        subnetname: %CLUSTER_NAME%-api
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -159,60 +159,60 @@ resources:
                         ipaddr:
                         netmask: 255.255.255.0
                         primary_interface: true
-                        subnetname: %CLUSTER_NAME%-prv
+                        subnetname: %CLUSTER_NAME%-api
 
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
            
-  login1_ext_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_param: ext_network }
-
   login1_prv_port:
     type: OS::Neutron::Port
-    depends_on: prv_subnet
     properties:
-      network_id: { get_resource: prv_network }
+      network_id: { get_param: prv_network }
+
+  login1_api_port:
+    type: OS::Neutron::Port
+    depends_on: api_subnet
+    properties:
+      network_id: { get_resource: api_network }
 
   login1_access:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network: public
-      port_id: { get_resource: login1_ext_port }
-
-  node01_ext_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_param: ext_network }
+      port_id: { get_resource: login1_prv_port }
 
   node01_prv_port:
     type: OS::Neutron::Port
-    depends_on: prv_subnet
     properties:
-      network_id: { get_resource: prv_network }
+      network_id: { get_param: prv_network }
 
-  node02_ext_port:
+  node01_api_port:
     type: OS::Neutron::Port
+    depends_on: api_subnet
     properties:
-      network_id: { get_param: ext_network }
+      network_id: { get_resource: api_network }
 
   node02_prv_port:
     type: OS::Neutron::Port
-    depends_on: prv_subnet
     properties:
-      network_id: { get_resource: prv_network }
+      network_id: { get_param: prv_network }
 
-  node03_ext_port:
+  node02_api_port:
     type: OS::Neutron::Port
+    depends_on: api_subnet
     properties:
-      network_id: { get_param: ext_network }
+      network_id: { get_resource: api_network }
 
   node03_prv_port:
     type: OS::Neutron::Port
-    depends_on: prv_subnet
     properties:
-      network_id: { get_resource: prv_network }
+      network_id: { get_param: prv_network }
+
+  node03_api_port:
+    type: OS::Neutron::Port
+    depends_on: api_subnet
+    properties:
+      network_id: { get_resource: api_network }
 
   login1:
     type: OS::Nova::Server
@@ -222,8 +222,8 @@ resources:
       flavor: { get_param: compute_flavour }
       key_name: { get_param: admin_key }
       networks:
-        - port: { get_resource: login1_ext_port }
         - port: { get_resource: login1_prv_port }
+        - port: { get_resource: login1_api_port }
       user_data_format: RAW
       user_data: { get_resource: master_config }
 
@@ -235,8 +235,8 @@ resources:
       flavor: { get_param: compute_flavour }
       key_name: { get_param: admin_key }
       networks:
-        - port: { get_resource: node01_ext_port }
         - port: { get_resource: node01_prv_port }
+        - port: { get_resource: node01_api_port }
       user_data_format: RAW
       user_data: { get_resource: node01_config }
 
@@ -248,8 +248,8 @@ resources:
       flavor: { get_param: compute_flavour }
       key_name: { get_param: admin_key }
       networks:
-        - port: { get_resource: node02_ext_port }
         - port: { get_resource: node02_prv_port }
+        - port: { get_resource: node02_api_port }
       user_data_format: RAW
       user_data: { get_resource: node02_config }
 
@@ -261,8 +261,8 @@ resources:
       flavor: { get_param: compute_flavour }
       key_name: { get_param: admin_key }
       networks:
-        - port: { get_resource: node03_ext_port }
         - port: { get_resource: node03_prv_port }
+        - port: { get_resource: node03_api_port }
       user_data_format: RAW
       user_data: { get_resource: node03_config }
 
