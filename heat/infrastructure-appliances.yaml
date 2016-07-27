@@ -1,0 +1,100 @@
+heat_template_version: 2013-05-23
+
+description: >
+    Launch an appliance into your existing infrastructure
+
+parameters:
+  admin_key:
+    type: string
+    label: Cluster admin key
+    description: Enter the name of an OpenStack nova keypair for administrator access
+    constraints:
+    - custom_constraint: nova.keypair
+
+  cluster_type:
+    type: string
+    label: Bumblebee Image
+    description: Choose Bumblebee image to use
+    constraints:
+    - custom_constraint: glance.image
+
+  appliance_flavor:
+    type: string
+    label: >
+      Flavour to deploy appliance as
+    description: Appliance flavour 
+    constraints:
+    - custom_constraint: nova.flavor
+
+  prv_network:
+    type: string
+    label: Private network
+    description: Cluster infrastructure private network
+    constraints:
+    - custom_constraint: neutron.network
+
+  domain:
+    type: string
+    label: Environment domain
+    description: Enter your environment domain, e.g. sitename
+
+resources:
+  cluster_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: 'OS::stack_name' }
+      description: Enable ping/SSH
+      rules:
+      - protocol: icmp
+      - protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+
+  appliance_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+            write_files:
+            - path: /opt/bumblebee/etc/cluster.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    instance:
+                      domain: %DOMAIN%.alces.cluster
+                      profile: %PROFILE%
+                    interfaces:
+                      eth0:
+                        name: eth0
+                        ipaddr:
+                        netmask: 255.255.255.0
+                        subnetname: prv
+                        primary_interface: true
+
+                  params:
+                    "%PROFILE%": { get_param: 'OS::stack_name' }
+                    "%DOMAIN%": { get_param: domain }
+
+  appliance_prv_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: prv_network }
+
+  appliance_access:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: public
+      port_id: { get_resource: appliance_prv_port }
+
+  appliance:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: 'OS::stack_name' }
+      image: { get_param: cluster_type }
+      flavor: { get_param: appliance_flavor }
+      key_name: { get_param: admin_key }
+      networks:
+        - port: { get_resource: appliance_prv_port }
+      user_data_format: RAW
+      user_data: { get_resource: appliance_config }
