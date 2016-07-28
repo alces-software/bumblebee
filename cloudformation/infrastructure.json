@@ -408,7 +408,8 @@
                         ],
                         "SubnetId": {
                             "Ref": "PrvSubnet"
-                        }
+                        },
+                        "PrivateIpAddress": "10.75.0.254"
                     }
                 ],
                 "BlockDeviceMappings": [
