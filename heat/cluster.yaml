@@ -230,6 +230,32 @@ resources:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
                     "%UUID%": { get_resource: cluster_uuid }
                     "%TOKEN%": { get_resource: cluster_token }
+            - path: /opt/clusterware/etc/cluster-customizer.rc
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    ################################################################################
+                    ###
+                    ## Alces Clusterware - Shell configuration
+                    ## Copyright (c) 2016 Stephen F. Norledge and Alces Software Ltd.
+                    ##
+                    ################################################################################
+                    cw_CLUSTER_CUSTOMIZER_bucket="%S3BUCKET%"
+                    cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
+                    #cw_CLUSTER_CUSTOMIZER_features="test"
+                    cw_CLUSTER_CUSTOMIZER_region="%S3REGION%"
+                    cw_CLUSTER_CUSTOMIZER_access_key_id=%S3ACCESSKEY%
+                    cw_CLUSTER_CUSTOMIZER_secret_access_key=%S3SECRETKEY%
+                    #cw_CLUSTER_CUSTOMIZER_path="/opt/clusterware/var/lib/customizer"
+                    #cw_CLUSTER_CUSTOMIZER_custom_paths="/opt/alces"
+                  params:
+                    "%S3BUCKET%": { get_param: s3bucket }
+                    "%PROFILES%": { get_param: customizer_profiles }
+                    "%S3ACCESSKEY%": { get_param: s3_access_key }
+                    "%S3SECRETKEY%": { get_param: s3_secret_key }
+                    "%S3REGION%": { get_param: s3_region }
 
   node02_config:
     type: OS::Heat::CloudConfig
@@ -276,6 +302,32 @@ resources:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
                     "%UUID%": { get_resource: cluster_uuid }
                     "%TOKEN%": { get_resource: cluster_token }
+            - path: /opt/clusterware/etc/cluster-customizer.rc
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    ################################################################################
+                    ###
+                    ## Alces Clusterware - Shell configuration
+                    ## Copyright (c) 2016 Stephen F. Norledge and Alces Software Ltd.
+                    ##
+                    ################################################################################
+                    cw_CLUSTER_CUSTOMIZER_bucket="%S3BUCKET%"
+                    cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
+                    #cw_CLUSTER_CUSTOMIZER_features="test"
+                    cw_CLUSTER_CUSTOMIZER_region="%S3REGION%"
+                    cw_CLUSTER_CUSTOMIZER_access_key_id=%S3ACCESSKEY%
+                    cw_CLUSTER_CUSTOMIZER_secret_access_key=%S3SECRETKEY%
+                    #cw_CLUSTER_CUSTOMIZER_path="/opt/clusterware/var/lib/customizer"
+                    #cw_CLUSTER_CUSTOMIZER_custom_paths="/opt/alces"
+                  params:
+                    "%S3BUCKET%": { get_param: s3bucket }
+                    "%PROFILES%": { get_param: customizer_profiles }
+                    "%S3ACCESSKEY%": { get_param: s3_access_key }
+                    "%S3SECRETKEY%": { get_param: s3_secret_key }
+                    "%S3REGION%": { get_param: s3_region }
 
   node03_config:
     type: OS::Heat::CloudConfig
@@ -322,6 +374,32 @@ resources:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
                     "%UUID%": { get_resource: cluster_uuid }
                     "%TOKEN%": { get_resource: cluster_token }
+            - path: /opt/clusterware/etc/cluster-customizer.rc
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    ################################################################################
+                    ###
+                    ## Alces Clusterware - Shell configuration
+                    ## Copyright (c) 2016 Stephen F. Norledge and Alces Software Ltd.
+                    ##
+                    ################################################################################
+                    cw_CLUSTER_CUSTOMIZER_bucket="%S3BUCKET%"
+                    cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
+                    #cw_CLUSTER_CUSTOMIZER_features="test"
+                    cw_CLUSTER_CUSTOMIZER_region="%S3REGION%"
+                    cw_CLUSTER_CUSTOMIZER_access_key_id=%S3ACCESSKEY%
+                    cw_CLUSTER_CUSTOMIZER_secret_access_key=%S3SECRETKEY%
+                    #cw_CLUSTER_CUSTOMIZER_path="/opt/clusterware/var/lib/customizer"
+                    #cw_CLUSTER_CUSTOMIZER_custom_paths="/opt/alces"
+                  params:
+                    "%S3BUCKET%": { get_param: s3bucket }
+                    "%PROFILES%": { get_param: customizer_profiles }
+                    "%S3ACCESSKEY%": { get_param: s3_access_key }
+                    "%S3SECRETKEY%": { get_param: s3_secret_key }
+                    "%S3REGION%": { get_param: s3_region }
 
   login1_prv_port:
     type: OS::Neutron::Port
