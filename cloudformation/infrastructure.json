@@ -10,8 +10,8 @@
             "Type": "String",
             "Default": "500"
         },
-        "LoginType": {
-            "Description": "Select the login node instance type to deploy - this defines the number of cores and memory available.",
+        "DirectoryType": {
+            "Description": "Select the directory EC2 instance type to deploy",
             "Type": "String",
             "Default": "medium-r3.2xlarge",
             "AllowedValues": [
@@ -39,7 +39,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-3b711748"
+                "HVM64": "ami-0f462a7c"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -371,67 +371,6 @@
                 ]
             }
         },
-        "ComputeIAM": {
-            "Type": "AWS::IAM::Role",
-            "Properties": {
-                "AssumeRolePolicyDocument": {
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": [
-                                    "ec2.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
-        "ComputeIAMProfile": {
-            "Type": "AWS::IAM::InstanceProfile",
-            "Properties": {
-                "Path": "/",
-                "Roles": [
-                    {
-                        "Ref": "ComputeIAM"
-                    }
-                ]
-            }
-        },
-        "ComputeNetInterfacePermissions": {
-            "Type": "AWS::IAM::Policy",
-            "Properties": {
-                "PolicyName": "ComputeNetInterfacePermissions",
-                "PolicyDocument": {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Action": [
-                                "ec2:AttachNetworkInterface",
-                                "ec2:CreateNetworkInterface",
-                                "ec2:DeleteNetworkInterface",
-                                "ec2:DetachNetworkInterface",
-                                "ec2:ModifyNetworkInterfaceAttribute",
-                                "ec2:DescribeSubnets"
-                            ],
-                            "Resource": [
-                                "*"
-                            ]
-                        }
-                    ]
-                },
-                "Roles": [
-                    {
-                        "Ref": "ComputeIAM"
-                    }
-                ]
-            }
-        },
         "Directory": {
             "Type": "AWS::EC2::Instance",
             "DependsOn": "FlightGWAttach",
@@ -456,7 +395,7 @@
                     "Ref": "MasterIAMProfile"
                 },
                 "ImageId": {
-                    "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" }, { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "LoginType" }, "InstanceType" ] }, "Arch" ] } ]
+                    "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" }, { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "DirectoryType" }, "InstanceType" ] }, "Arch" ] } ]
                 },
                 "NetworkInterfaces": [
                     {
@@ -491,7 +430,7 @@
                     }
                 ],
                 "InstanceType": {
-                    "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "LoginType" }, "InstanceType" ]
+                    "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "DirectoryType" }, "InstanceType" ]
                 },
                 "KeyName": {
                     "Ref": "KeyPair"
@@ -505,7 +444,7 @@
                               "write_files:\n",
                               "- content: |\n",
                               "    instance:\n",
-                              "      domain: alces.cluster\n",
+                              "      domain: ", { "Ref": "AWS::StackName" }, "alces.cluster\n",
                               "      profile: directory\n",
                               "    interfaces:\n",
                               "  owner: root:root\n",
