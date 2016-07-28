@@ -444,7 +444,7 @@
                               "write_files:\n",
                               "- content: |\n",
                               "    instance:\n",
-                              "      domain: ", { "Ref": "AWS::StackName" }, "alces.cluster\n",
+                              "      domain: ", { "Ref": "AWS::StackName" }, ".alces.cluster\n",
                               "      profile: directory\n",
                               "    interfaces:\n",
                               "  owner: root:root\n",
