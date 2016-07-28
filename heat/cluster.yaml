@@ -133,11 +133,11 @@ resources:
                         name: eth0
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
+                        primary_interface: true
                         netmask: 255.255.255.0
                         subnetname: %CLUSTER_NAME%-api
                   params:
@@ -154,6 +154,8 @@ resources:
                       token: '%TOKEN%'
                       name: '%CLUSTER_NAME%'
                       role: 'master'
+                      tags:
+                          scheduler_roles: ':master:'
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
                     "%UUID%": { get_resource: cluster_uuid }
@@ -205,12 +207,12 @@ resources:
                         name: eth0
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
+                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
                   params:
                       "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -226,6 +228,8 @@ resources:
                       token: '%TOKEN%'
                       name: '%CLUSTER_NAME%'
                       role: 'master'
+                      tags:
+                          scheduler_roles: ':compute:'
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
                     "%UUID%": { get_resource: cluster_uuid }
@@ -277,12 +281,12 @@ resources:
                         name: eth0
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
+                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
                   params:
                       "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -298,6 +302,8 @@ resources:
                       token: '%TOKEN%'
                       name: '%CLUSTER_NAME%'
                       role: 'master'
+                      tags:
+                          scheduler_roles: ':compute:'
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
                     "%UUID%": { get_resource: cluster_uuid }
@@ -349,12 +355,12 @@ resources:
                         name: eth0
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
+                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -370,6 +376,8 @@ resources:
                       token: '%TOKEN%'
                       name: '%CLUSTER_NAME%'
                       role: 'master'
+                      tags:
+                          scheduler_roles: ':compute:'
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
                     "%UUID%": { get_resource: cluster_uuid }
