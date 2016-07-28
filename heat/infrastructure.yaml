@@ -77,7 +77,7 @@ resources:
                 str_replace:
                   template: |
                     instance:
-                      domain: bedrock.alces.cluster
+                      domain: %CLUSTER_NAME%.alces.cluster
                       profile: directory
                     interfaces:
                       eth0:
