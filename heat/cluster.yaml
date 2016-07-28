@@ -33,7 +33,24 @@ parameters:
     constraints:
     - custom_constraint: neutron.network
 
+  domain:
+    type: string
+    label: Environment domain
+    description: Enter your environment domain, e.g. sitename
+
 resources:
+  cluster_uuid:
+    type: OS::Heat::RandomString
+    properties:
+      length: 24
+      sequence: digits
+  
+  cluster_token:
+    type: OS::Heat::RandomString
+    properties:
+      length: 20
+      sequence: lettersdigits
+
   api_network:
     type: OS::Neutron::Net
     properties:
@@ -73,18 +90,38 @@ resources:
                   template: |
                     instance:
                       cluster: '%CLUSTER_NAME%'
-                      domain: bedrock.alces.cluster
+                      domain: %DOMAIN%.alces.cluster
                       profile: login1
                     interfaces:
+                      eth0:
+                        name: eth0
+                        ipaddr:
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
-
+                  params:
+                      "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                      "%DOMAIN%": { get_param: domain }
+            - path: /opt/clusterware/etc/config.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    cluster:
+                      uuid: '%UUID%'
+                      token: '%TOKEN%'
+                      name: '%CLUSTER_NAME%'
+                      role: 'master'
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                    "%UUID%": { get_resource: cluster_uuid }
+                    "%TOKEN%": { get_resource: cluster_token }
 
   node01_config:
     type: OS::Heat::CloudConfig
@@ -99,18 +136,38 @@ resources:
                   template: |
                     instance:
                       cluster: '%CLUSTER_NAME%'
-                      domain: bedrock.alces.cluster
+                      domain: %DOMAIN%.alces.cluster
                       profile: node01
                     interfaces:
+                      eth0:
+                        name: eth0
+                        ipaddr:
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
-
+                  params:
+                      "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                      "%DOMAIN%": { get_param: domain }
+            - path: /opt/clusterware/etc/config.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    cluster:
+                      uuid: '%UUID%'
+                      token: '%TOKEN%'
+                      name: '%CLUSTER_NAME%'
+                      role: 'master'
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                    "%UUID%": { get_resource: cluster_uuid }
+                    "%TOKEN%": { get_resource: cluster_token }
 
   node02_config:
     type: OS::Heat::CloudConfig
@@ -125,18 +182,38 @@ resources:
                   template: |
                     instance:
                       cluster: '%CLUSTER_NAME%'
-                      domain: bedrock.alces.cluster
+                      domain: %DOMAIN%.alces.cluster
                       profile: node02
                     interfaces:
+                      eth0:
+                        name: eth0
+                        ipaddr:
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
-
+                  params:
+                      "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                      "%DOMAIN%": { get_param: domain }
+            - path: /opt/clusterware/etc/config.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    cluster:
+                      uuid: '%UUID%'
+                      token: '%TOKEN%'
+                      name: '%CLUSTER_NAME%'
+                      role: 'master'
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                    "%UUID%": { get_resource: cluster_uuid }
+                    "%TOKEN%": { get_resource: cluster_token }
 
   node03_config:
     type: OS::Heat::CloudConfig
@@ -151,19 +228,39 @@ resources:
                   template: |
                     instance:
                       cluster: '%CLUSTER_NAME%'
-                      domain: bedrock.alces.cluster
+                      domain: %DOMAIN%.alces.cluster
                       profile: node03
                     interfaces:
+                      eth0:
+                        name: eth0
+                        ipaddr:
+                        netmask: 255.255.255.0
+                        primary_interface: true
+                        subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
-
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
-           
+                    "%DOMAIN%": { get_param: domain }
+            - path: /opt/clusterware/etc/config.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    cluster:
+                      uuid: '%UUID%'
+                      token: '%TOKEN%'
+                      name: '%CLUSTER_NAME%'
+                      role: 'master'
+                  params:
+                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                    "%UUID%": { get_resource: cluster_uuid }
+                    "%TOKEN%": { get_resource: cluster_token }
+
   login1_prv_port:
     type: OS::Neutron::Port
     properties:
