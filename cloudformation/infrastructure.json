@@ -1,6 +1,16 @@
 {
     "Description": "Bumblebee Infrastructure CloudFormation Template",
     "Parameters": {
+        "FlightCustomBucket": {
+            "Description": "Choose an S3 bucket (beginning with s3:// prefix) or leave blank for default",
+            "Type": "String",
+            "AllowedPattern": "(|^s3://[a-z0-9][-.a-z0-9][-.a-z0-9]*[a-z0-9]$)",
+            "ConstraintDescription": "Bucket must begin with s3:// or be left blank"
+        },
+        "FlightCustomProfiles": {
+            "Description": "Specify profiles separated by spaces or leave blank for default",
+            "Type": "String"
+        },
         "KeyPair": {
             "Description": "Choose an existing AWS key for administrator access",
             "Type": "AWS::EC2::KeyPair::KeyName"
@@ -25,6 +35,38 @@
             "Type": "String",
             "AllowedPattern": "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}/[0-9]{1,2}",
             "ConstraintDescription": "Please specify a valid CIDR, e.g. 0.0.0.0/0"
+        }
+    },
+    "Conditions": {
+        "HasFlightCustomBucket": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "FlightCustomBucket"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        },
+        "HasFlightCustomProfiles": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "FlightCustomProfiles"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        },
+        "HasFlightCustom": {
+            "Fn::Or": [
+                {"Condition" : "HasFlightCustomBucket"},
+                {"Condition" : "HasFlightCustomProfiles"}
+            ]
         }
     },
     "Mappings": {
@@ -341,25 +383,25 @@
                 ]
             }
         },
-        "MasterNetInterfacePermissions": {
+        "MasterBucketPermissions": {
             "Type": "AWS::IAM::Policy",
             "Properties": {
-                "PolicyName": "MasterNetInterfacePermissions",
+                "PolicyName": "MasterBucketPermissions",
                 "PolicyDocument": {
                     "Version": "2012-10-17",
                     "Statement": [
                         {
                             "Effect": "Allow",
                             "Action": [
-                                "ec2:AttachNetworkInterface",
-                                "ec2:CreateNetworkInterface",
-                                "ec2:DeleteNetworkInterface",
-                                "ec2:DetachNetworkInterface",
-                                "ec2:ModifyNetworkInterfaceAttribute",
-                                "ec2:DescribeSubnets"
+                                "s3:ListBucket",
+                                "s3:CreateBucket",
+                                "s3:GetObject",
+                                "s3:DeleteObject",
+                                "s3:PutObject"
                             ],
                             "Resource": [
-                                "*"
+                                "arn:aws:s3:::alces-flight-*",
+                                "arn:aws:s3:::alces-flight-*/*"
                             ]
                         }
                     ]
@@ -442,6 +484,27 @@
                             "",
                             [
                               "#cloud-config\n",
+                              {
+                                  "Fn::If": [
+                                      "HasFlightCustom",
+                                      {
+                                          "Fn::Join": [
+                                              " ",
+                                              [
+                                                  "#=FlightCustomizer",
+                                                  {
+                                                      "Ref": "FlightCustomBucket"
+                                                  },
+                                                  {
+                                                      "Ref": "FlightCustomProfiles"
+                                                  },
+                                                  "\n"
+                                              ]
+                                          ]
+                                      },
+                                      ""
+                                  ]
+                              },
                               "write_files:\n",
                               "- content: |\n",
                               "    instance:\n",
@@ -450,7 +513,15 @@
                               "    interfaces:\n",
                               "  owner: root:root\n",
                               "  path: /opt/bumblebee/etc/cluster.yml\n",
-                              "  permissions: '0740'\n"
+                              "  permissions: '0740'\n",
+                              "- content: |\n",
+                              "    cluster:\n",
+                              { "Fn::Join": ["", ["      identity: '", { "Ref": "AWS::StackId" }, "'\n"] ] },
+                              "      name: '", { "Ref": "AWS::StackName" }, "'\n",
+                              "      role: 'appliance'\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/clusterware/etc/config.yml\n",
+                              "  permissions: '0640'\n"
                             ]
                         ]
                     }

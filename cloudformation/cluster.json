@@ -642,6 +642,27 @@
                             "",
                             [
                               "#cloud-config\n",
+                              {
+                                  "Fn::If": [
+                                      "HasFlightCustom",
+                                      {
+                                          "Fn::Join": [
+                                              " ",
+                                              [
+                                                  "#=FlightCustomizer",
+                                                  {
+                                                      "Ref": "FlightCustomBucket"
+                                                  },
+                                                  {
+                                                      "Ref": "FlightCustomProfiles"
+                                                  },
+                                                  "\n"
+                                              ]
+                                          ]
+                                      },
+                                      ""
+                                  ]
+                              },
                               "write_files:\n",
                               "- content: |\n",
                               "    instance:\n",
@@ -674,6 +695,17 @@
                     }
                 }
             }
+        }
+    },
+    "Outputs": {
+        "AccessIP": {
+          "Description": "Public access IP for your Flight Compute environment",
+          "Value": {
+              "Fn::GetAtt": [
+                  "Directory",
+                  "PublicIp"
+              ]
+          }
         }
     }
 }
