@@ -86,7 +86,17 @@ resources:
                         netmask: 255.255.255.0
                         subnetname: prv
                         primary_interface: true
-
+                  params:
+                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+            - path: /opt/clusterware/etc/config.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    cluster:
+                      name: %CLUSTER_NAME%
+                      role: 'master'
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
 

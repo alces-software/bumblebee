@@ -186,6 +186,9 @@ resources:
                     "%S3ACCESSKEY%": { get_param: s3_access_key }
                     "%S3SECRETKEY%": { get_param: s3_secret_key }
                     "%S3REGION%": { get_param: s3_region }
+            - path: /opt/clusterware/var/lib/configurator/ready
+              permissions: '0640'
+              owner: root:root
 
   node01_config:
     type: OS::Heat::CloudConfig
@@ -260,6 +263,9 @@ resources:
                     "%S3ACCESSKEY%": { get_param: s3_access_key }
                     "%S3SECRETKEY%": { get_param: s3_secret_key }
                     "%S3REGION%": { get_param: s3_region }
+            - path: /opt/clusterware/var/lib/configurator/ready
+              permissions: '0640'
+              owner: root:root
 
   node02_config:
     type: OS::Heat::CloudConfig
@@ -334,6 +340,9 @@ resources:
                     "%S3ACCESSKEY%": { get_param: s3_access_key }
                     "%S3SECRETKEY%": { get_param: s3_secret_key }
                     "%S3REGION%": { get_param: s3_region }
+            - path: /opt/clusterware/var/lib/configurator/ready
+              permissions: '0640'
+              owner: root:root
 
   node03_config:
     type: OS::Heat::CloudConfig
@@ -408,6 +417,9 @@ resources:
                     "%S3ACCESSKEY%": { get_param: s3_access_key }
                     "%S3SECRETKEY%": { get_param: s3_secret_key }
                     "%S3REGION%": { get_param: s3_region }
+            - path: /opt/clusterware/var/lib/configurator/ready
+              permissions: '0640'
+              owner: root:root
 
   login1_prv_port:
     type: OS::Neutron::Port

@@ -107,6 +107,9 @@ else
 
     printf "Found interface #{intname}\n"
 
+    system `sed -i '/#APPLIANCERULES#/a -A INPUT -i #{intname} -j ACCEPT' /etc/sysconfig/iptables`
+    system `systemctl restart iptables`
+
     intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
 
     intconfig.puts "DEVICE=\"#{intname}\"\n"
