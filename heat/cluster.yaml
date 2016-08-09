@@ -134,10 +134,10 @@ resources:
                         ipaddr:
                         netmask: 255.255.255.0
                         subnetname: prv
+                        primary_interface: true
                       eth1:
                         name: eth1
                         ipaddr:
-                        primary_interface: true
                         netmask: 255.255.255.0
                         subnetname: %CLUSTER_NAME%-api
                   params:
@@ -211,11 +211,11 @@ resources:
                         ipaddr:
                         netmask: 255.255.255.0
                         subnetname: prv
+                        primary_interface: true
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
                   params:
                       "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -230,7 +230,7 @@ resources:
                       uuid: '%UUID%'
                       token: '%TOKEN%'
                       name: '%CLUSTER_NAME%'
-                      role: 'master'
+                      role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'
                   params:
@@ -288,11 +288,11 @@ resources:
                         ipaddr:
                         netmask: 255.255.255.0
                         subnetname: prv
+                        primary_interface: true
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
                   params:
                       "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -307,7 +307,7 @@ resources:
                       uuid: '%UUID%'
                       token: '%TOKEN%'
                       name: '%CLUSTER_NAME%'
-                      role: 'master'
+                      role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'
                   params:
@@ -364,12 +364,12 @@ resources:
                         name: eth0
                         ipaddr:
                         netmask: 255.255.255.0
+                        primary_interface: true
                         subnetname: prv
                       eth1:
                         name: eth1
                         ipaddr:
                         netmask: 255.255.255.0
-                        primary_interface: true
                         subnetname: %CLUSTER_NAME%-api
                   params:
                     "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
@@ -384,7 +384,7 @@ resources:
                       uuid: '%UUID%'
                       token: '%TOKEN%'
                       name: '%CLUSTER_NAME%'
-                      role: 'master'
+                      role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'
                   params:

@@ -99,7 +99,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-5fa8c42c"
+                "HVM64": "ami-dfcca0ac"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -564,6 +564,15 @@
                               "      domain: ", { "Ref": "ClusterDomain" }, ".alces.cluster\n",
                               "      profile: login1\n",
                               "    interfaces:\n",
+                              "      eth1:\n",
+                              "        name: eth1\n",
+                              "        ipaddr: 10.75.10.20\n",
+                              "        netmask: 255.255.255.0\n",
+                              "        subnetname: ", { "Ref": "AWS::StackName" }, "-api\n",
+                              "        subnetid: ", { "Ref": "FlightApiSubnet" }, "\n",
+                              "        primary_interface: true\n",
+                              "        network_interface_id:\n",
+                              "        attachment_id:\n",
                               "  owner: root:root\n",
                               "  path: /opt/bumblebee/etc/cluster.yml\n",
                               "  permissions: '0740'\n",
@@ -676,6 +685,7 @@
                               "        netmask: 255.255.255.0\n",
                               "        subnetname: ", { "Ref": "AWS::StackName" }, "-api\n",
                               "        subnetid: ", { "Ref": "FlightApiSubnet" }, "\n",
+                              "        primary_interface: true\n",
                               "        network_interface_id:\n",
                               "        attachment_id:\n",
                               "  owner: root:root\n",
@@ -702,7 +712,7 @@
           "Description": "Public access IP for your Flight Compute environment",
           "Value": {
               "Fn::GetAtt": [
-                  "Directory",
+                  "FlightLogin",
                   "PublicIp"
               ]
           }
