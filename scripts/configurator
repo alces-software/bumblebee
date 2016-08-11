@@ -130,7 +130,7 @@ else
         intconfig.puts "IPADDR=\"#{ipaddr}\"\n"
         intconfig.puts "NETMASK=\"#{netmask}\"\n"
       end
-      itconfig.close
+      intconfig.close
 
       intwait = `while [ ! "$(/sbin/ip addr | grep "#{intname}")" ]; do sleep 1; done`
       intup = `/sbin/ifup #{intname} > /dev/null`
