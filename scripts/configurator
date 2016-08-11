@@ -75,34 +75,38 @@ else
     netmask = info['netmask']
     subnetid = info['subnetid']
     subnetname = info['subnetname']
+    skip_create = info['skip_create']
     primary_interface = info['primary_interface']
     deviceindex = intname.gsub(/[^0-9]/,"")
 
     if platform == 'aws'
-      createint = ec2.create_network_interface({
-        subnet_id: subnetid,
-        description: "#{subnetname} interface for #{instance_id}",
-        private_ip_address: ipaddr,
-      })
-      # Generate network_interface_id
-      network_interface_id = createint.network_interface.network_interface_id
+      if skip_create.to_s.empty?
 
-      attachint = ec2.attach_network_interface({
-        network_interface_id: network_interface_id,
-        instance_id: instance_id,
-        device_index: deviceindex,
-      })
-      # Generate attachment_id
-      attachment_id = attachint.attachment_id
+        create_int = ec2.create_network_interface({
+          subnet_id: subnetid,
+          description: "#{subnetname} interface for #{instance_id}",
+          private_ip_address: ipaddr,
+        })
 
-      modifyint = ec2.modify_network_interface_attribute({
-        network_interface_id: network_interface_id,
-        attachment: {
-          attachment_id: attachment_id,
-          delete_on_termination: true,
-        }
-      })
+        network_interface_id = createint.network_interface.network_interface_id
 
+        attachint = ec2.attach_network_interface({
+          network_interface_id: network_interface_id,
+          instance_id: instance_id,
+          device_index: deviceindex,
+        })
+
+        attachment_id = attachint.attachment_id
+
+        modify_int = ec2.modify_network_interface_attribute({
+          network_interface_id: network_interface_id,
+          attachment: {
+            attachment_id: attachment_id,
+            delete_on_termination: true,
+          }
+        })
+
+      end
     end
 
     printf "Found interface #{intname}\n"
@@ -110,29 +114,29 @@ else
     system `sed -i '/#APPLIANCERULES#/a -A INPUT -i #{intname} -j ACCEPT' /etc/sysconfig/iptables`
     system `systemctl restart iptables`
 
-    intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
+    if skip_create.to_s.empty?
+      intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
+      intconfig.puts "DEVICE=\"#{intname}\"\n"
+      intconfig.puts "ONBOOT=\"yes\"\n"
+      intconfig.puts "TYPE=\"Ethernet\"\n"
+      if ipaddr.to_s.empty?
+        printf "Configuring interface #{intname} on #{subnetname}\n"
+        intconfig.puts "BOOTPROTO=\"dhcp\"\n"
+        intconfig.puts "PEERDNS=\"no\"\n"
+        intconfig.puts "PEERROUTES=\"no\"\n"
+        intconfig.puts "DEFROUTE=\"no\"\n"
+      else
+        intconfig.puts "BOOTPROTO=\"none\"\n"
+        intconfig.puts "IPADDR=\"#{ipaddr}\"\n"
+        intconfig.puts "NETMASK=\"#{netmask}\"\n"
+      end
+      itconfig.close
 
-    intconfig.puts "DEVICE=\"#{intname}\"\n"
-    intconfig.puts "ONBOOT=\"yes\"\n"
-    intconfig.puts "TYPE=\"Ethernet\"\n"
-    if ipaddr.to_s.empty?
-      printf "Configuring interface #{intname} on #{subnetname}\n"
-      intconfig.puts "BOOTPROTO=\"dhcp\"\n"
-      intconfig.puts "PEERDNS=\"no\"\n"
-      intconfig.puts "PEERROUTES=\"no\"\n"
-      intconfig.puts "DEFROUTE=\"no\"\n"
-    else
-      intconfig.puts "BOOTPROTO=\"none\"\n"
-      intconfig.puts "IPADDR=\"#{ipaddr}\"\n"
-      intconfig.puts "NETMASK=\"#{netmask}\"\n"
+      intwait = `while [ ! "$(/sbin/ip addr | grep "#{intname}")" ]; do sleep 1; done`
+      intup = `/sbin/ifup #{intname} > /dev/null`
+      system(intwait)
+      system(intup)
     end
-
-    intconfig.close
-
-    intwait = `while [ ! "$(/sbin/ip addr | grep "#{intname}")" ]; do sleep 1; done`
-    intup = `/sbin/ifup #{intname} > /dev/null`
-    system(intwait)
-    system(intup)
 
     if primary_interface.to_s.empty?
     elsif primary_interface == true

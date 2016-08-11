@@ -99,7 +99,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-dfcca0ac"
+                "HVM64": "ami-88a4cffb"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -564,15 +564,20 @@
                               "      domain: ", { "Ref": "ClusterDomain" }, ".alces.cluster\n",
                               "      profile: login1\n",
                               "    interfaces:\n",
+                              "      eth0:\n",
+                              "        name: eth0\n",
+                              "        ipaddr:\n",
+                              "        netmask: 255.255.255.0\n",
+                              "        skip_create: true\n",
+                              "        primary_interface: true\n",
+                              "        subnetname:\n",
+                              "        subnetid:\n",
                               "      eth1:\n",
                               "        name: eth1\n",
                               "        ipaddr: 10.75.10.20\n",
                               "        netmask: 255.255.255.0\n",
                               "        subnetname: ", { "Ref": "AWS::StackName" }, "-api\n",
                               "        subnetid: ", { "Ref": "FlightApiSubnet" }, "\n",
-                              "        primary_interface: true\n",
-                              "        network_interface_id:\n",
-                              "        attachment_id:\n",
                               "  owner: root:root\n",
                               "  path: /opt/bumblebee/etc/cluster.yml\n",
                               "  permissions: '0740'\n",
@@ -581,9 +586,17 @@
                               { "Fn::Join": ["", ["      identity: '", { "Ref": "AWS::StackId" }, "'\n"] ] },
                               "      name: '", { "Ref": "AWS::StackName" }, "'\n",
                               "      role: 'master'\n",
+                              "      tags:\n",
+                              "        scheduler_roles: ':master:'\n",
                               "  owner: root:root\n",
                               "  path: /opt/clusterware/etc/config.yml\n",
-                              "  permissions: '0640'\n"
+                              "  permissions: '0640'\n",
+                              "- content: |\n",
+                              "    ready\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/clusterware/var/lib/configurator/ready\n",
+                              "  permissions: 0640\n"
+
                             ]
                         ]
                     }
@@ -679,15 +692,20 @@
                               "      domain: ", { "Ref": "ClusterDomain" }, ".alces.cluster\n",
                               "      profile: node01\n",
                               "    interfaces:\n",
+                              "      eth0:\n",
+                              "        name: eth0\n",
+                              "        ipaddr:\n",
+                              "        netmask: 255.255.255.0\n",
+                              "        skip_create: true\n",
+                              "        primary_interface: true\n",
+                              "        subnetname:\n",
+                              "        subnetid:\n",
                               "      eth1:\n",
                               "        name: eth1\n",
                               "        ipaddr: 10.75.10.21\n",
                               "        netmask: 255.255.255.0\n",
                               "        subnetname: ", { "Ref": "AWS::StackName" }, "-api\n",
                               "        subnetid: ", { "Ref": "FlightApiSubnet" }, "\n",
-                              "        primary_interface: true\n",
-                              "        network_interface_id:\n",
-                              "        attachment_id:\n",
                               "  owner: root:root\n",
                               "  path: /opt/bumblebee/etc/cluster.yml\n",
                               "  permissions: '0640'\n",
@@ -697,9 +715,16 @@
                               "      name: '", { "Ref": "AWS::StackName" }, "'\n",
                               "      role: 'slave'\n",
                               "      master: ", { "Fn::GetAtt": [ "FlightLogin", "PrivateIp" ] }, "\n",
+                              "      tags:\n",
+                              "        scheduler_roles: ':compute:'\n",
                               "  owner: root:root\n",
                               "  path: /opt/clusterware/etc/config.yml\n",
-                              "  permissions: '0640'\n"
+                              "  permissions: '0640'\n",
+                              "- content: |\n",
+                              "    ready\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/clusterware/var/lib/configurator/ready\n",
+                              "  permissions: 0640\n"
                             ]
                         ]
                     }
