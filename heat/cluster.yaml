@@ -4,6 +4,14 @@ description: >
     Bumblebee Heat template
 
 parameters:
+  flight_cluster_uuid:
+    type: string
+    label: Flight Cluster UUID
+
+  flight_cluster_token:
+    type: string
+    label: Flight Cluster Token
+
   cluster_name:
     type: string
     label: Enter your desired cluster name
@@ -162,8 +170,8 @@ resources:
                 str_replace:
                   template: |
                     cluster:
-                      uuid: '%UUID%'
-                      token: '%TOKEN%'
+                      uuid: '%FLIGHT_CLUSTER_UUID%'
+                      token: '%FLIGHT_CLUSTER_TOKEN%'
                       service_url: '%FLIGHT_SERVICE_URL%'
                       name: '%CLUSTER_NAME%'
                       role: 'master'
@@ -174,8 +182,8 @@ resources:
                         uuid: '%FLIGHT_UUID%'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%UUID%": { get_resource: cluster_uuid }
-                    "%TOKEN%": { get_resource: cluster_token }
+                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
+                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
                     "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
                     "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
             - path: /opt/clusterware/etc/cluster-customizer.rc
@@ -245,8 +253,8 @@ resources:
                 str_replace:
                   template: |
                     cluster:
-                      uuid: '%UUID%'
-                      token: '%TOKEN%'
+                      uuid: '%FLIGHT_CLUSTER_UUID%'
+                      token: '%FLIGHT_CLUSTER_TOKEN%'
                       service_url: '%FLIGHT_SERVICE_URL%'
                       name: '%CLUSTER_NAME%'
                       role: 'slave'
@@ -257,8 +265,8 @@ resources:
                         uuid: '%FLIGHT_UUID%'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%UUID%": { get_resource: cluster_uuid }
-                    "%TOKEN%": { get_resource: cluster_token }
+                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
+                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
                     "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
                     "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
             - path: /opt/clusterware/etc/cluster-customizer.rc
@@ -328,8 +336,8 @@ resources:
                 str_replace:
                   template: |
                     cluster:
-                      uuid: '%UUID%'
-                      token: '%TOKEN%'
+                      uuid: '%FLIGHT_CLUSTER_UUID%'
+                      token: '%FLIGHT_CLUSTER_TOKEN%'
                       service_url: '%FLIGHT_SERVICE_URL%'
                       name: '%CLUSTER_NAME%'
                       role: 'slave'
@@ -340,8 +348,8 @@ resources:
                         uuid: '%FLIGHT_UUID%'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%UUID%": { get_resource: cluster_uuid }
-                    "%TOKEN%": { get_resource: cluster_token }
+                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
+                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
                     "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
                     "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
             - path: /opt/clusterware/etc/cluster-customizer.rc
@@ -411,8 +419,8 @@ resources:
                 str_replace:
                   template: |
                     cluster:
-                      uuid: '%UUID%'
-                      token: '%TOKEN%'
+                      uuid: '%FLIGHT_CLUSTER_UUID%'
+                      token: '%FLIGHT_CLUSTER_TOKEN%'
                       service_url: '%FLIGHT_SERVICE_URL%'
                       name: '%CLUSTER_NAME%'
                       role: 'slave'
@@ -423,8 +431,8 @@ resources:
                         uuid: '%FLIGHT_UUID%'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%UUID%": { get_resource: cluster_uuid }
-                    "%TOKEN%": { get_resource: cluster_token }
+                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
+                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
                     "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
                     "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
             - path: /opt/clusterware/etc/cluster-customizer.rc

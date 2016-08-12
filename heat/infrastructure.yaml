@@ -4,6 +4,14 @@ description: >
     Bumblebee Heat template
 
 parameters:
+  flight_cluster_uuid:
+    type: string
+    description: Flight Cluster UUID
+
+  flight_cluster_token:
+    type: string
+    description: Flight Cluster Token
+
   s3bucket:
     type: string
     label: Alces Customizer S3 bucket
@@ -162,6 +170,8 @@ resources:
                     cluster:
                       name: %CLUSTER_NAME%
                       role: 'master'
+                      uuid: '%FLIGHT_CLUSTER_UUID%'
+                      token: '%FLIGHT_CLUSTER_TOKEN%'
                       service_url: '%FLIGHT_SERVICE_URL%'
                     instance:
                       flight:
@@ -170,6 +180,8 @@ resources:
                     "%CLUSTER_NAME%": { get_param: environment_domain }
                     "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
                     "%FLIGHT_SERVICE_URL%": { get_param: flight_service_url }
+                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
+                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
             - path: /opt/clusterware/var/lib/configurator/ready
               permissions: '0640'
               owner: root:root
