@@ -4,12 +4,52 @@ description: >
     Bumblebee Heat template
 
 parameters:
+  s3bucket:
+    type: string
+    label: Alces Customizer S3 bucket
+    description: >
+        Enter the S3 bucket to use with the Alces Customizer tool
+
+  s3_region:
+    type: string
+    label: S3 Region
+    description: >
+        Please enter the S3 region of the bucket your customizer
+        scripts live in, e.g. us-east-1
+
+  s3_access_key:
+    type: string
+    label: S3 Access Key
+    description: >
+        Please enter your AWS S3 Access Key for use with the Alces
+        Customizer utility
+    hidden: true
+
+  s3_secret_key:
+    type: string
+    label: S3 Secret Key
+    description: >
+        Please enter your AWS S3 Secret Key for use with the Alces
+        Customizer utility
+    hidden: true
+
   admin_key:
     type: string
     label: Cluster admin key
     description: Enter the name of an OpenStack nova keypair for administrator access
     constraints:
     - custom_constraint: nova.keypair
+
+  environment_domain:
+    type: string
+
+  flight_service_url:
+    type: string
+    description: URL for the Alces Flight service
+ 
+  flight_instance_uuid:
+    type: string
+    description: Flight Instance UUID
 
   cluster_type:
     type: string
@@ -70,6 +110,31 @@ resources:
     properties:
       cloud_config:
             write_files:
+            - path: /opt/clusterware/etc/cluster-customizer.rc
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    ################################################################################
+                    ###
+                    ## Alces Clusterware - Shell configuration
+                    ## Copyright (c) 2016 Stephen F. Norledge and Alces Software Ltd.
+                    ##
+                    ################################################################################
+                    cw_CLUSTER_CUSTOMIZER_bucket="%S3BUCKET%"
+                    #cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
+                    #cw_CLUSTER_CUSTOMIZER_features="test"
+                    cw_CLUSTER_CUSTOMIZER_region="%S3REGION%"
+                    cw_CLUSTER_CUSTOMIZER_access_key_id=%S3ACCESSKEY%
+                    cw_CLUSTER_CUSTOMIZER_secret_access_key=%S3SECRETKEY%
+                    #cw_CLUSTER_CUSTOMIZER_path="/opt/clusterware/var/lib/customizer"
+                    #cw_CLUSTER_CUSTOMIZER_custom_paths="/opt/alces"
+                  params:
+                    "%S3BUCKET%": { get_param: s3bucket }
+                    "%S3ACCESSKEY%": { get_param: s3_access_key }
+                    "%S3SECRETKEY%": { get_param: s3_secret_key }
+                    "%S3REGION%": { get_param: s3_region }
             - path: /opt/bumblebee/etc/cluster.yml
               permissions: '0640'
               owner: root:root
@@ -77,7 +142,7 @@ resources:
                 str_replace:
                   template: |
                     instance:
-                      domain: %CLUSTER_NAME%.alces.cluster
+                      domain: %DOMAIN_NAME%.alces.cluster
                       profile: directory
                     interfaces:
                       eth0:
@@ -87,7 +152,7 @@ resources:
                         subnetname: prv
                         primary_interface: true
                   params:
-                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                    "%DOMAIN_NAME%": { get_param: 'environment_domain' }
             - path: /opt/clusterware/etc/config.yml
               permissions: '0640'
               owner: root:root
@@ -97,8 +162,17 @@ resources:
                     cluster:
                       name: %CLUSTER_NAME%
                       role: 'master'
+                      service_url: '%FLIGHT_SERVICE_URL%'
+                    instance:
+                      flight:
+                        uuid: '%FLIGHT_UUID%'
                   params:
-                    "%CLUSTER_NAME%": { get_param: 'OS::stack_name' }
+                    "%CLUSTER_NAME%": { get_param: environment_domain }
+                    "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
+                    "%FLIGHT_SERVICE_URL%": { get_param: flight_service_url }
+            - path: /opt/clusterware/var/lib/configurator/ready
+              permissions: '0640'
+              owner: root:root
 
   directory_prv_port:
     type: OS::Neutron::Port
@@ -132,3 +206,11 @@ outputs:
   directory_public_ip:
     description: Floating IP address of directory in public network
     value: { get_attr: [ directory_access, floating_ip_address ] }
+
+  environment_domain:
+    description: Environment domain name
+    value: { get_param: environment_domain }
+
+  prv_network:
+    description: Private network
+    value: { get_resource: prv_network }
