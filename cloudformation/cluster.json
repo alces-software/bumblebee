@@ -1,6 +1,22 @@
 {
     "Description": "Bumblebee CloudFormation template",
     "Parameters": {
+        "FlightClusterUUID": {
+            "Type": "String",
+            "Description": "Flight Cluster UUID"
+        },
+        "FlightClusterToken": {
+            "Type": "String",
+            "Description": "Flight Cluster Token"
+        },
+        "FlightServiceURL": {
+            "Type": "String",
+            "Description": "Flight Service URL"
+        },
+        "FlightInstanceUUID": {
+            "Type": "String",
+            "Description": "Flight Instance UUID"
+        },
         "FlightCustomBucket": {
             "Description": "Choose an S3 bucket (beginning with s3:// prefix) or leave blank for default",
             "Type": "String",
@@ -99,7 +115,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-88a4cffb"
+                "HVM64": "ami-97c9a2e4"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -583,11 +599,16 @@
                               "  permissions: '0740'\n",
                               "- content: |\n",
                               "    cluster:\n",
-                              { "Fn::Join": ["", ["      identity: '", { "Ref": "AWS::StackId" }, "'\n"] ] },
                               "      name: '", { "Ref": "AWS::StackName" }, "'\n",
                               "      role: 'master'\n",
+                              "      uuid: '", { "Ref": "FlightClusterUUID" }, "'\n",
+                              "      token: '", { "Ref": "FlightClusterToken" }, "'\n",
+                              "      service_url: ", { "Ref": "FlightServiceURL" }, "\n",
                               "      tags:\n",
                               "        scheduler_roles: ':master:'\n",
+                              "    instance:\n",
+                              "      flight:\n",
+                              "        uuid: '", { "Ref": "FlightInstanceUUID" }, "'\n",
                               "  owner: root:root\n",
                               "  path: /opt/clusterware/etc/config.yml\n",
                               "  permissions: '0640'\n",
@@ -711,12 +732,283 @@
                               "  permissions: '0640'\n",
                               "- content: |\n",
                               "    cluster:\n",
-                              { "Fn::Join": ["", ["      identity: '", { "Ref": "AWS::StackId" }, "'\n"] ] },
                               "      name: '", { "Ref": "AWS::StackName" }, "'\n",
                               "      role: 'slave'\n",
                               "      master: ", { "Fn::GetAtt": [ "FlightLogin", "PrivateIp" ] }, "\n",
+                              "      uuid: '", { "Ref": "FlightClusterUUID" }, "'\n",
+                              "      token: '", { "Ref": "FlightClusterToken" }, "'\n",
+                              "      service_url: ", { "Ref": "FlightServiceURL" }, "\n",
                               "      tags:\n",
                               "        scheduler_roles: ':compute:'\n",
+                              "    instance:\n",
+                              "      flight:\n",
+                              "        uuid: '", { "Ref": "FlightInstanceUUID" }, "'\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/clusterware/etc/config.yml\n",
+                              "  permissions: '0640'\n",
+                              "- content: |\n",
+                              "    ready\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/clusterware/var/lib/configurator/ready\n",
+                              "  permissions: 0640\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "Node02": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "AWS::StackName"
+                                    },
+                                    "-node02"
+                                ]
+                            ]
+                        }
+                    }
+                ],
+                "IamInstanceProfile": {
+                    "Ref": "MasterIAMProfile"
+                },
+                "ImageId": {
+                    "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" }, { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "ComputeType" }, "InstanceType" ] }, "Arch" ] } ]
+                },
+                "NetworkInterfaces": [
+                    {
+                        "AssociatePublicIpAddress": "True",
+                        "DeviceIndex": "0",
+            "GroupSet": [ { "Ref": "FlightSG" } ],
+                        "SubnetId": { "Ref": "PrvSubnet" }
+                    }
+                ],
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1",
+                        "Ebs": {
+                            "VolumeSize": "30"
+                        }
+                    },
+                    {
+                        "DeviceName": "/dev/xvdb",
+                        "VirtualName": "ephemeral0"
+                    },
+                    {
+                        "DeviceName": "/dev/xvdc",
+                        "VirtualName": "ephemeral1"
+                    }
+                ],
+                "InstanceType": {
+                    "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "ComputeType" }, "InstanceType" ]
+                },
+                "KeyName": {
+                    "Ref": "KeyPair"
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                              "#cloud-config\n",
+                              {
+                                  "Fn::If": [
+                                      "HasFlightCustom",
+                                      {
+                                          "Fn::Join": [
+                                              " ",
+                                              [
+                                                  "#=FlightCustomizer",
+                                                  {
+                                                      "Ref": "FlightCustomBucket"
+                                                  },
+                                                  {
+                                                      "Ref": "FlightCustomProfiles"
+                                                  },
+                                                  "\n"
+                                              ]
+                                          ]
+                                      },
+                                      ""
+                                  ]
+                              },
+                              "write_files:\n",
+                              "- content: |\n",
+                              "    instance:\n",
+                              "      cluster: ", { "Ref": "AWS::StackName" }, "\n",
+                              "      domain: ", { "Ref": "ClusterDomain" }, ".alces.cluster\n",
+                              "      profile: node02\n",
+                              "    interfaces:\n",
+                              "      eth0:\n",
+                              "        name: eth0\n",
+                              "        ipaddr:\n",
+                              "        netmask: 255.255.255.0\n",
+                              "        skip_create: true\n",
+                              "        primary_interface: true\n",
+                              "        subnetname:\n",
+                              "        subnetid:\n",
+                              "      eth1:\n",
+                              "        name: eth1\n",
+                              "        ipaddr: 10.75.10.22\n",
+                              "        netmask: 255.255.255.0\n",
+                              "        subnetname: ", { "Ref": "AWS::StackName" }, "-api\n",
+                              "        subnetid: ", { "Ref": "FlightApiSubnet" }, "\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/bumblebee/etc/cluster.yml\n",
+                              "  permissions: '0640'\n",
+                              "- content: |\n",
+                              "    cluster:\n",
+                              "      name: '", { "Ref": "AWS::StackName" }, "'\n",
+                              "      role: 'slave'\n",
+                              "      master: ", { "Fn::GetAtt": [ "FlightLogin", "PrivateIp" ] }, "\n",
+                              "      uuid: '", { "Ref": "FlightClusterUUID" }, "'\n",
+                              "      token: '", { "Ref": "FlightClusterToken" }, "'\n",
+                              "      service_url: ", { "Ref": "FlightServiceURL" }, "\n",
+                              "      tags:\n",
+                              "        scheduler_roles: ':compute:'\n",
+                              "    instance:\n",
+                              "      flight:\n",
+                              "        uuid: '", { "Ref": "FlightInstanceUUID" }, "'\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/clusterware/etc/config.yml\n",
+                              "  permissions: '0640'\n",
+                              "- content: |\n",
+                              "    ready\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/clusterware/var/lib/configurator/ready\n",
+                              "  permissions: 0640\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "Node03": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "AWS::StackName"
+                                    },
+                                    "-node03"
+                                ]
+                            ]
+                        }
+                    }
+                ],
+                "IamInstanceProfile": {
+                    "Ref": "MasterIAMProfile"
+                },
+                "ImageId": {
+                    "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" }, { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "ComputeType" }, "InstanceType" ] }, "Arch" ] } ]
+                },
+                "NetworkInterfaces": [
+                    {
+                        "AssociatePublicIpAddress": "True",
+                        "DeviceIndex": "0",
+            "GroupSet": [ { "Ref": "FlightSG" } ],
+                        "SubnetId": { "Ref": "PrvSubnet" }
+                    }
+                ],
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sda1",
+                        "Ebs": {
+                            "VolumeSize": "30"
+                        }
+                    },
+                    {
+                        "DeviceName": "/dev/xvdb",
+                        "VirtualName": "ephemeral0"
+                    },
+                    {
+                        "DeviceName": "/dev/xvdc",
+                        "VirtualName": "ephemeral1"
+                    }
+                ],
+                "InstanceType": {
+                    "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "ComputeType" }, "InstanceType" ]
+                },
+                "KeyName": {
+                    "Ref": "KeyPair"
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                              "#cloud-config\n",
+                              {
+                                  "Fn::If": [
+                                      "HasFlightCustom",
+                                      {
+                                          "Fn::Join": [
+                                              " ",
+                                              [
+                                                  "#=FlightCustomizer",
+                                                  {
+                                                      "Ref": "FlightCustomBucket"
+                                                  },
+                                                  {
+                                                      "Ref": "FlightCustomProfiles"
+                                                  },
+                                                  "\n"
+                                              ]
+                                          ]
+                                      },
+                                      ""
+                                  ]
+                              },
+                              "write_files:\n",
+                              "- content: |\n",
+                              "    instance:\n",
+                              "      cluster: ", { "Ref": "AWS::StackName" }, "\n",
+                              "      domain: ", { "Ref": "ClusterDomain" }, ".alces.cluster\n",
+                              "      profile: node03\n",
+                              "    interfaces:\n",
+                              "      eth0:\n",
+                              "        name: eth0\n",
+                              "        ipaddr:\n",
+                              "        netmask: 255.255.255.0\n",
+                              "        skip_create: true\n",
+                              "        primary_interface: true\n",
+                              "        subnetname:\n",
+                              "        subnetid:\n",
+                              "      eth1:\n",
+                              "        name: eth1\n",
+                              "        ipaddr: 10.75.10.23\n",
+                              "        netmask: 255.255.255.0\n",
+                              "        subnetname: ", { "Ref": "AWS::StackName" }, "-api\n",
+                              "        subnetid: ", { "Ref": "FlightApiSubnet" }, "\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/bumblebee/etc/cluster.yml\n",
+                              "  permissions: '0640'\n",
+                              "- content: |\n",
+                              "    cluster:\n",
+                              "      name: '", { "Ref": "AWS::StackName" }, "'\n",
+                              "      role: 'slave'\n",
+                              "      master: ", { "Fn::GetAtt": [ "FlightLogin", "PrivateIp" ] }, "\n",
+                              "      uuid: '", { "Ref": "FlightClusterUUID" }, "'\n",
+                              "      token: '", { "Ref": "FlightClusterToken" }, "'\n",
+                              "      service_url: ", { "Ref": "FlightServiceURL" }, "\n",
+                              "      tags:\n",
+                              "        scheduler_roles: ':compute:'\n",
+                              "    instance:\n",
+                              "      flight:\n",
+                              "        uuid: '", { "Ref": "FlightInstanceUUID" }, "'\n",
                               "  owner: root:root\n",
                               "  path: /opt/clusterware/etc/config.yml\n",
                               "  permissions: '0640'\n",

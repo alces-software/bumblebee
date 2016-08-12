@@ -1,24 +1,29 @@
 {
     "Description": "Bumblebee Infrastructure CloudFormation Template",
     "Parameters": {
-        "FlightCustomBucket": {
-            "Description": "Choose an S3 bucket (beginning with s3:// prefix) or leave blank for default",
-            "Type": "String",
-            "AllowedPattern": "(|^s3://[a-z0-9][-.a-z0-9][-.a-z0-9]*[a-z0-9]$)",
-            "ConstraintDescription": "Bucket must begin with s3:// or be left blank"
+        "FlightClusterUUID": {
+            "Description": "Flight Cluster UUID",
+            "Type": "String"
         },
-        "FlightCustomProfiles": {
-            "Description": "Specify profiles separated by spaces or leave blank for default",
+        "FlightClusterToken": {
+            "Description": "Flight Cluster Token",
+            "Type": "String"
+        },
+        "FlightServiceURL": {
+            "Description": "Flight Service URL",
+            "Type": "String"
+        },
+        "FlightInstanceUUID": {
+            "Description": "Flight Instance UUID",
+            "Type": "String"
+        },
+        "EnvironmentDomain": {
+            "Description": "Enter a domain for your environment",
             "Type": "String"
         },
         "KeyPair": {
             "Description": "Choose an existing AWS key for administrator access",
             "Type": "AWS::EC2::KeyPair::KeyName"
-        },
-        "LoginSystemDiskSize": {
-            "Description": "Enter the size in GB of shared system disk to deploy. This defines the amount of shared user and application storage available.",
-            "Type": "String",
-            "Default": "500"
         },
         "DirectoryType": {
             "Description": "Select the directory EC2 instance type to deploy",
@@ -37,38 +42,6 @@
             "ConstraintDescription": "Please specify a valid CIDR, e.g. 0.0.0.0/0"
         }
     },
-    "Conditions": {
-        "HasFlightCustomBucket": {
-            "Fn::Not": [
-                {
-                    "Fn::Equals": [
-                        {
-                            "Ref": "FlightCustomBucket"
-                        },
-                        ""
-                    ]
-                }
-            ]
-        },
-        "HasFlightCustomProfiles": {
-            "Fn::Not": [
-                {
-                    "Fn::Equals": [
-                        {
-                            "Ref": "FlightCustomProfiles"
-                        },
-                        ""
-                    ]
-                }
-            ]
-        },
-        "HasFlightCustom": {
-            "Fn::Or": [
-                {"Condition" : "HasFlightCustomBucket"},
-                {"Condition" : "HasFlightCustomProfiles"}
-            ]
-        }
-    },
     "Mappings": {
         "AWSRegionArch2AMI": {
             "us-east-1": {
@@ -81,7 +54,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-0f462a7c"
+                "HVM64": "ami-52a1ca21"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -458,9 +431,7 @@
                     {
                         "DeviceName": "/dev/sda1",
                         "Ebs": {
-                            "VolumeSize": {
-			        "Ref": "LoginSystemDiskSize"
-                            }
+                            "VolumeSize": "50"
                         }
                     },
                     {
@@ -484,31 +455,10 @@
                             "",
                             [
                               "#cloud-config\n",
-                              {
-                                  "Fn::If": [
-                                      "HasFlightCustom",
-                                      {
-                                          "Fn::Join": [
-                                              " ",
-                                              [
-                                                  "#=FlightCustomizer",
-                                                  {
-                                                      "Ref": "FlightCustomBucket"
-                                                  },
-                                                  {
-                                                      "Ref": "FlightCustomProfiles"
-                                                  },
-                                                  "\n"
-                                              ]
-                                          ]
-                                      },
-                                      ""
-                                  ]
-                              },
                               "write_files:\n",
                               "- content: |\n",
                               "    instance:\n",
-                              "      domain: ", { "Ref": "AWS::StackName" }, ".alces.cluster\n",
+                              "      domain: ", { "Ref": "EnvironmentDomain" }, ".alces.cluster\n",
                               "      profile: directory\n",
                               "    interfaces:\n",
                               "  owner: root:root\n",
@@ -517,8 +467,13 @@
                               "- content: |\n",
                               "    cluster:\n",
                               { "Fn::Join": ["", ["      identity: '", { "Ref": "AWS::StackId" }, "'\n"] ] },
-                              "      name: '", { "Ref": "AWS::StackName" }, "'\n",
-                              "      role: 'appliance'\n",
+                              "      name: '", { "Ref": "EnvironmentDomain" }, "'\n",
+                              "      uuid: '", { "Ref": "FlightClusterUUID" }, "'\n",
+                              "      token: '", { "Ref": "FlightClusterToken" }, "'\n",
+                              "      service_url: '", { "Ref": "FlightServiceURL" }, "'\n",
+                              "    instance:\n",
+                              "      flight:\n",
+                              "        uuid: '", { "Ref": "FlightInstanceUUID" }, "'\n",
                               "  owner: root:root\n",
                               "  path: /opt/clusterware/etc/config.yml\n",
                               "  permissions: '0640'\n"
@@ -538,6 +493,12 @@
                   "PublicIp"
               ]
           }
+        },
+        "Domain": {
+            "Description": "Infrastructure domain",
+            "Value": {
+                "Ref": "EnvironmentDomain"
+            }
         }
     }
 }
