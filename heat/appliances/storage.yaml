@@ -142,8 +142,6 @@ resources:
                       service_url: '%FLIGHT_SERVICE_URL%'
                       name: '%CLUSTER_NAME%'
                       role: 'slave'
-                      tags:
-                          scheduler_roles: ':master:'
                     instance:
                       flight:
                         uuid: '%FLIGHT_UUID%'
