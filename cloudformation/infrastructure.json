@@ -499,6 +499,14 @@
             "Value": {
                 "Ref": "EnvironmentDomain"
             }
+        },
+        "PrivateVPC": {
+          "Description": "Private VPC ID",
+          "Value": { "Ref": "PrivateVPC" }
+        },
+        "PrivateSubnet": {
+          "Description": "Private Subnet ID",
+          "Value": { "Ref": "PrivateSubnet" }
         }
     }
 }
