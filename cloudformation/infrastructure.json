@@ -506,7 +506,7 @@
         },
         "PrivateSubnet": {
           "Description": "Private Subnet ID",
-          "Value": { "Ref": "PrivateSubnet" }
+          "Value": { "Ref": "PrvSubnet" }
         }
     }
 }
