@@ -184,7 +184,8 @@ resources:
               permissions: '0640'
               owner: root:root
               content: |
-                flightusers 10.75.0.0/16 instance
+                /flightusers 10.75.0.0/16 instance
+                /mnt/science 10.75.0.0/16 instance
 
   appliance_prv_port:
     type: OS::Neutron::Port
