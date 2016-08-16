@@ -67,7 +67,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-38aedb4b"
+                "HVM64": "ami-ba93e6c9"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -381,7 +381,7 @@
                               "  permissions: '0740'\n",
                               "- content: |\n",
                               "    cluster:\n",
-                              "      name: '", { "Ref": "AWS::StackName" }, "'\n",
+                              "      name: '", { "Ref": "ClusterDomain" }, "'\n",
                               "      role: 'slave'\n",
                               "      uuid: '", { "Ref": "FlightClusterUUID" }, "'\n",
                               "      token: '", { "Ref": "FlightClusterToken" }, "'\n",
@@ -394,7 +394,7 @@
                               "  permissions: '0640'\n",
                               "- content: |\n",
                               "   /flightusers 10.75.0.0/16 instance\n",
-
+                              "   /mnt/science 10.75.0.0/16 instance\n",
                               "- content: |\n",
                               "    ready\n",
                               "  owner: root:root\n",
