@@ -539,6 +539,11 @@
                               "        uuid: '", { "Ref": "FlightInstanceUUID" }, "'\n",
                               "  owner: root:root\n",
                               "  path: /opt/clusterware/etc/config.yml\n",
+                              "  permissions: '0640'\n",
+                              "- content: |\n",
+                              "    ready\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/clusterware/var/lib/configurator/ready\n",
                               "  permissions: '0640'\n"
                             ]
                         ]

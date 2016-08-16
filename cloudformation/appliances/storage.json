@@ -410,10 +410,10 @@
     },
     "Outputs": {
         "AccessIP": {
-          "Description": "Public access IP for your Flight Compute environment",
+          "Description": "Public access IP for your Flight Storage appliance",
           "Value": {
               "Fn::GetAtt": [
-                  "FlightLogin",
+                  "FlightStorage",
                   "PublicIp"
               ]
           }
