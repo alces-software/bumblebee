@@ -41,6 +41,13 @@ parameters:
         Customizer utility
     hidden: true
 
+  customizer_profiles:
+    type: string
+    label: Alces Customizer profiles
+    description: >
+        Enter the Alces Customizer profiles you wish to use. Please
+        include a space between each profile, e.g. bio cfd
+
   admin_key:
     type: string
     label: Cluster admin key
@@ -54,7 +61,7 @@ parameters:
   flight_service_url:
     type: string
     description: URL for the Alces Flight service
- 
+
   flight_instance_uuid:
     type: string
     description: Flight Instance UUID
@@ -131,7 +138,7 @@ resources:
                     ##
                     ################################################################################
                     cw_CLUSTER_CUSTOMIZER_bucket="%S3BUCKET%"
-                    #cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
+                    cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
                     #cw_CLUSTER_CUSTOMIZER_features="test"
                     cw_CLUSTER_CUSTOMIZER_region="%S3REGION%"
                     cw_CLUSTER_CUSTOMIZER_access_key_id=%S3ACCESSKEY%
@@ -143,6 +150,7 @@ resources:
                     "%S3ACCESSKEY%": { get_param: s3_access_key }
                     "%S3SECRETKEY%": { get_param: s3_secret_key }
                     "%S3REGION%": { get_param: s3_region }
+                    "%PROFILES%": { get_param: customizer_profiles }
             - path: /opt/bumblebee/etc/cluster.yml
               permissions: '0640'
               owner: root:root
