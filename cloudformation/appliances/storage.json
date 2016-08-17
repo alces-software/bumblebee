@@ -366,7 +366,7 @@
                               "    instance:\n",
                               "      cluster: ", { "Ref": "AWS::StackName" }, "\n",
                               "      domain: ", { "Ref": "ClusterDomain" }, ".alces.cluster\n",
-                              "      profile: login1\n",
+                              "      profile: storage1\n",
                               "    interfaces:\n",
                               "      eth0:\n",
                               "        name: eth0\n",
