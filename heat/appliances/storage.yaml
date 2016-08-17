@@ -125,7 +125,6 @@ resources:
                         primary_interface: true
                   params:
                       "%DOMAIN%": { get_param: domain }
-                      "%APPLIANCE_PROFILE%": { get_param: appliance_profile }
             - path: /opt/clusterware/etc/config.yml
               permissions: '0640'
               owner: root:root
