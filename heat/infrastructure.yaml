@@ -21,6 +21,7 @@ parameters:
   s3_region:
     type: string
     label: S3 Region
+    default: eu-west-1
     description: >
         Please enter the S3 region of the bucket your customizer
         scripts live in, e.g. us-east-1
@@ -44,6 +45,7 @@ parameters:
   customizer_profiles:
     type: string
     label: Alces Customizer profiles
+    default: directory
     description: >
         Enter the Alces Customizer profiles you wish to use. Please
         include a space between each profile, e.g. bio cfd

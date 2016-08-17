@@ -12,10 +12,6 @@ parameters:
     type: string
     label: Flight Cluster Token
 
-  appliance_profile:
-    type: string
-    label: Enter the Appliance Profile name
-
   admin_key:
     type: string
     label: Cluster admin key
@@ -119,7 +115,7 @@ resources:
                   template: |
                     instance:
                       domain: %DOMAIN%.alces.cluster
-                      profile: %APPLIANCE_PROFILE%
+                      profile: storage1
                     interfaces:
                       eth0:
                         name: eth0

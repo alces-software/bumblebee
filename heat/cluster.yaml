@@ -66,6 +66,7 @@ parameters:
   s3_region:
     type: string
     label: S3 Region
+    default: eu-west-1
     description: >
         Please enter the S3 region of the bucket your customizer
         scripts live in, e.g. us-east-1
@@ -100,7 +101,7 @@ resources:
     properties:
       length: 24
       sequence: digits
-  
+
   cluster_token:
     type: OS::Heat::RandomString
     properties:
@@ -110,7 +111,7 @@ resources:
   api_network:
     type: OS::Neutron::Net
     properties:
-      name: { "Fn::Join": [ "", [ { get_param: 'OS::stack_name' }, "-api" ] ]  }  
+      name: { "Fn::Join": [ "", [ { get_param: 'OS::stack_name' }, "-api" ] ]  }
 
   api_subnet:
     type: OS::Neutron::Subnet
