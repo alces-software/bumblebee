@@ -1,0 +1,228 @@
+heat_template_version: 2013-05-23
+
+description: >
+    Bumblebee Heat template
+
+parameters:
+  s3bucket:
+    type: string
+    label: Alces Customizer S3 bucket
+    description: >
+        Enter the S3 bucket to use with the Alces Customizer tool
+
+  s3_region:
+    type: string
+    label: S3 Region
+    default: eu-west-1
+    description: >
+        Please enter the S3 region of the bucket your customizer
+        scripts live in, e.g. us-east-1
+
+  s3_access_key:
+    type: string
+    label: S3 Access Key
+    description: >
+        Please enter your AWS S3 Access Key for use with the Alces
+        Customizer utility
+    hidden: true
+
+  s3_secret_key:
+    type: string
+    label: S3 Secret Key
+    description: >
+        Please enter your AWS S3 Secret Key for use with the Alces
+        Customizer utility
+    hidden: true
+
+  customizer_profiles:
+    type: string
+    label: Alces Customizer profiles
+    default: directory
+    description: >
+        Enter the Alces Customizer profiles you wish to use. Please
+        include a space between each profile, e.g. bio cfd
+
+  admin_key:
+    type: string
+    label: Cluster admin key
+    description: Enter the name of an OpenStack nova keypair for administrator access
+    constraints:
+    - custom_constraint: nova.keypair
+
+  environment_domain:
+    type: string
+
+  cluster_type:
+    type: string
+    label: Bumblebee Image
+    description: Choose Bumblebee image to use
+    constraints:
+    - custom_constraint: glance.image
+
+  directory_flavour:
+    type: string
+    label: >
+      Directory instance flavour
+    description: Directory instance type
+    constraints:
+    - custom_constraint: nova.flavor
+
+resources:
+  cluster_uuid:
+    type: OS::Heat::RandomString
+    properties:
+      length: 24
+      sequence: digits
+
+  cluster_token:
+    type: OS::Heat::RandomString
+    properties:
+      length: 20
+      sequence: lettersdigits
+
+  prv_network:
+    type: OS::Neutron::Net
+    properties:
+      name: { "Fn::Join": [ "", [ { get_param: 'OS::stack_name' }, "-prv" ] ] }
+
+  prv_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: prv_network }
+      cidr: 10.75.0.0/24
+      dns_nameservers: [ "8.8.8.8", "8.8.4.4" ]
+      allocation_pools:
+        - start: 10.75.0.2
+          end: 10.75.0.253
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: public
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: prv_subnet }
+
+  cluster_sg:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: { get_param: 'OS::stack_name' }
+      description: Enable ping/SSH
+      rules:
+      - protocol: icmp
+      - protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+
+  directory_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+            write_files:
+            - path: /opt/clusterware/etc/cluster-customizer.rc
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    ################################################################################
+                    ###
+                    ## Alces Clusterware - Shell configuration
+                    ## Copyright (c) 2016 Stephen F. Norledge and Alces Software Ltd.
+                    ##
+                    ################################################################################
+                    cw_CLUSTER_CUSTOMIZER_bucket="%S3BUCKET%"
+                    cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
+                    #cw_CLUSTER_CUSTOMIZER_features="test"
+                    cw_CLUSTER_CUSTOMIZER_region="%S3REGION%"
+                    cw_CLUSTER_CUSTOMIZER_access_key_id=%S3ACCESSKEY%
+                    cw_CLUSTER_CUSTOMIZER_secret_access_key=%S3SECRETKEY%
+                    #cw_CLUSTER_CUSTOMIZER_path="/opt/clusterware/var/lib/customizer"
+                    #cw_CLUSTER_CUSTOMIZER_custom_paths="/opt/alces"
+                  params:
+                    "%S3BUCKET%": { get_param: s3bucket }
+                    "%S3ACCESSKEY%": { get_param: s3_access_key }
+                    "%S3SECRETKEY%": { get_param: s3_secret_key }
+                    "%S3REGION%": { get_param: s3_region }
+                    "%PROFILES%": { get_param: customizer_profiles }
+            - path: /opt/bumblebee/etc/cluster.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    instance:
+                      domain: %DOMAIN_NAME%.alces.cluster
+                      profile: directory
+                    interfaces:
+                      eth0:
+                        name: eth0
+                        ipaddr: 10.75.0.254
+                        netmask: 255.255.255.0
+                        subnetname: prv
+                        primary_interface: true
+                  params:
+                    "%DOMAIN_NAME%": { get_param: 'environment_domain' }
+            - path: /opt/clusterware/etc/config.yml
+              permissions: '0640'
+              owner: root:root
+              content:
+                str_replace:
+                  template: |
+                    cluster:
+                      name: %CLUSTER_NAME%
+                      role: 'master'
+                      uuid: '%CLUSTER_UUID%'
+                      token: '%CLUSTER_TOKEN%'
+                  params:
+                    "%CLUSTER_NAME%": { get_param: environment_domain }
+                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
+            - path: /opt/clusterware/var/lib/configurator/ready
+              permissions: '0640'
+              owner: root:root
+
+  directory_prv_port:
+    type: OS::Neutron::Port
+    depends_on: prv_subnet
+    properties:
+      network_id: { get_resource: prv_network }
+      fixed_ips:
+        - subnet_id: { get_resource: prv_subnet }
+          ip_address: 10.75.0.254
+
+  directory_access:
+    type: OS::Neutron::FloatingIP
+    depends_on: router
+    properties:
+      floating_network: public
+      port_id: { get_resource: directory_prv_port }
+
+  directory:
+    type: OS::Nova::Server
+    properties:
+      name: directory
+      image: { get_param: cluster_type }
+      flavor: { get_param: directory_flavour }
+      key_name: { get_param: admin_key }
+      networks:
+        - port: { get_resource: directory_prv_port }
+      user_data_format: RAW
+      user_data: { get_resource: directory_config }
+
+outputs:
+  directory_public_ip:
+    description: Floating IP address of directory in public network
+    value: { get_attr: [ directory_access, floating_ip_address ] }
+
+  environment_domain:
+    description: Environment domain name
+    value: { get_param: environment_domain }
+
+  prv_network:
+    description: Private network
+    value: { get_resource: prv_network }

@@ -4,14 +4,6 @@ description: >
     Bumblebee Heat template
 
 parameters:
-  flight_cluster_uuid:
-    type: string
-    label: Flight Cluster UUID
-
-  flight_cluster_token:
-    type: string
-    label: Flight Cluster Token
-
   cluster_name:
     type: string
     label: Enter your desired cluster name
@@ -66,6 +58,7 @@ parameters:
   s3_region:
     type: string
     label: S3 Region
+    default: eu-west-1
     description: >
         Please enter the S3 region of the bucket your customizer
         scripts live in, e.g. us-east-1
@@ -85,14 +78,6 @@ parameters:
         Please enter your AWS S3 Secret Key for use with the Alces
         Customizer utility
     hidden: true
-
-  flight_service_url:
-    type: string
-    description: URL for the Alces Flight Service
-
-  flight_instance_uuid:
-    type: string
-    description: Flight Instance UUID
 
 resources:
   cluster_uuid:
@@ -170,22 +155,16 @@ resources:
                 str_replace:
                   template: |
                     cluster:
-                      uuid: '%FLIGHT_CLUSTER_UUID%'
-                      token: '%FLIGHT_CLUSTER_TOKEN%'
-                      service_url: '%FLIGHT_SERVICE_URL%'
+                      uuid: '%CLUSTER_UUID%'
+                      token: '%CLUSTER_TOKEN%'
                       name: '%CLUSTER_NAME%'
                       role: 'master'
                       tags:
                           scheduler_roles: ':master:'
-                    instance:
-                      flight:
-                        uuid: '%FLIGHT_UUID%'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
-                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
-                    "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
-                    "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
+                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
             - path: /opt/clusterware/etc/cluster-customizer.rc
               permissions: '0640'
               owner: root:root
@@ -253,22 +232,16 @@ resources:
                 str_replace:
                   template: |
                     cluster:
-                      uuid: '%FLIGHT_CLUSTER_UUID%'
-                      token: '%FLIGHT_CLUSTER_TOKEN%'
-                      service_url: '%FLIGHT_SERVICE_URL%'
+                      uuid: '%CLUSTER_UUID%'
+                      token: '%CLUSTER_TOKEN%'
                       name: '%CLUSTER_NAME%'
                       role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'
-                    instance:
-                      flight:
-                        uuid: '%FLIGHT_UUID%'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
-                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
-                    "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
-                    "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
+                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
             - path: /opt/clusterware/etc/cluster-customizer.rc
               permissions: '0640'
               owner: root:root
@@ -336,22 +309,16 @@ resources:
                 str_replace:
                   template: |
                     cluster:
-                      uuid: '%FLIGHT_CLUSTER_UUID%'
-                      token: '%FLIGHT_CLUSTER_TOKEN%'
-                      service_url: '%FLIGHT_SERVICE_URL%'
+                      uuid: '%CLUSTER_UUID%'
+                      token: '%CLUSTER_TOKEN%'
                       name: '%CLUSTER_NAME%'
                       role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'
-                    instance:
-                      flight:
-                        uuid: '%FLIGHT_UUID%'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
-                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
-                    "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
-                    "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
+                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
             - path: /opt/clusterware/etc/cluster-customizer.rc
               permissions: '0640'
               owner: root:root
@@ -426,181 +393,10 @@ resources:
                       role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'
-                    instance:
-                      flight:
-                        uuid: '%FLIGHT_UUID%'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
-                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
-                    "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
-                    "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
-            - path: /opt/clusterware/etc/cluster-customizer.rc
-              permissions: '0640'
-              owner: root:root
-              content:
-                str_replace:
-                  template: |
-                    ################################################################################
-                    ###
-                    ## Alces Clusterware - Shell configuration
-                    ## Copyright (c) 2016 Stephen F. Norledge and Alces Software Ltd.
-                    ##
-                    ################################################################################
-                    cw_CLUSTER_CUSTOMIZER_bucket="%S3BUCKET%"
-                    cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
-                    #cw_CLUSTER_CUSTOMIZER_features="test"
-                    cw_CLUSTER_CUSTOMIZER_region="%S3REGION%"
-                    cw_CLUSTER_CUSTOMIZER_access_key_id=%S3ACCESSKEY%
-                    cw_CLUSTER_CUSTOMIZER_secret_access_key=%S3SECRETKEY%
-                    #cw_CLUSTER_CUSTOMIZER_path="/opt/clusterware/var/lib/customizer"
-                    #cw_CLUSTER_CUSTOMIZER_custom_paths="/opt/alces"
-                  params:
-                    "%S3BUCKET%": { get_param: s3bucket }
-                    "%PROFILES%": { get_param: customizer_profiles }
-                    "%S3ACCESSKEY%": { get_param: s3_access_key }
-                    "%S3SECRETKEY%": { get_param: s3_secret_key }
-                    "%S3REGION%": { get_param: s3_region }
-            - path: /opt/clusterware/var/lib/configurator/ready
-              permissions: '0640'
-              owner: root:root
-
-  node04_config:
-    type: OS::Heat::CloudConfig
-    properties:
-      cloud_config:
-            write_files:
-            - path: /opt/bumblebee/etc/cluster.yml
-              permissions: '0640'
-              owner: root:root
-              content:
-                str_replace:
-                  template: |
-                    instance:
-                      cluster: '%CLUSTER_NAME%'
-                      domain: %DOMAIN%.alces.cluster
-                      profile: node04
-                    interfaces:
-                      eth0:
-                        name: eth0
-                        ipaddr:
-                        netmask: 255.255.255.0
-                        primary_interface: true
-                        subnetname: prv
-                      eth1:
-                        name: eth1
-                        ipaddr:
-                        netmask: 255.255.255.0
-                        subnetname: %CLUSTER_NAME%-api
-                  params:
-                    "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%DOMAIN%": { get_param: domain }
-            - path: /opt/clusterware/etc/config.yml
-              permissions: '0640'
-              owner: root:root
-              content:
-                str_replace:
-                  template: |
-                    cluster:
-                      uuid: '%FLIGHT_CLUSTER_UUID%'
-                      token: '%FLIGHT_CLUSTER_TOKEN%'
-                      service_url: '%FLIGHT_SERVICE_URL%'
-                      name: '%CLUSTER_NAME%'
-                      role: 'slave'
-                      tags:
-                          scheduler_roles: ':compute:'
-                    instance:
-                      flight:
-                        uuid: '%FLIGHT_UUID%'
-                  params:
-                    "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
-                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
-                    "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
-                    "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
-            - path: /opt/clusterware/etc/cluster-customizer.rc
-              permissions: '0640'
-              owner: root:root
-              content:
-                str_replace:
-                  template: |
-                    ################################################################################
-                    ###
-                    ## Alces Clusterware - Shell configuration
-                    ## Copyright (c) 2016 Stephen F. Norledge and Alces Software Ltd.
-                    ##
-                    ################################################################################
-                    cw_CLUSTER_CUSTOMIZER_bucket="%S3BUCKET%"
-                    cw_CLUSTER_CUSTOMIZER_profiles="%PROFILES%"
-                    #cw_CLUSTER_CUSTOMIZER_features="test"
-                    cw_CLUSTER_CUSTOMIZER_region="%S3REGION%"
-                    cw_CLUSTER_CUSTOMIZER_access_key_id=%S3ACCESSKEY%
-                    cw_CLUSTER_CUSTOMIZER_secret_access_key=%S3SECRETKEY%
-                    #cw_CLUSTER_CUSTOMIZER_path="/opt/clusterware/var/lib/customizer"
-                    #cw_CLUSTER_CUSTOMIZER_custom_paths="/opt/alces"
-                  params:
-                    "%S3BUCKET%": { get_param: s3bucket }
-                    "%PROFILES%": { get_param: customizer_profiles }
-                    "%S3ACCESSKEY%": { get_param: s3_access_key }
-                    "%S3SECRETKEY%": { get_param: s3_secret_key }
-                    "%S3REGION%": { get_param: s3_region }
-            - path: /opt/clusterware/var/lib/configurator/ready
-              permissions: '0640'
-              owner: root:root
-
-  node05_config:
-    type: OS::Heat::CloudConfig
-    properties:
-      cloud_config:
-            write_files:
-            - path: /opt/bumblebee/etc/cluster.yml
-              permissions: '0640'
-              owner: root:root
-              content:
-                str_replace:
-                  template: |
-                    instance:
-                      cluster: '%CLUSTER_NAME%'
-                      domain: %DOMAIN%.alces.cluster
-                      profile: node05
-                    interfaces:
-                      eth0:
-                        name: eth0
-                        ipaddr:
-                        netmask: 255.255.255.0
-                        primary_interface: true
-                        subnetname: prv
-                      eth1:
-                        name: eth1
-                        ipaddr:
-                        netmask: 255.255.255.0
-                        subnetname: %CLUSTER_NAME%-api
-                  params:
-                    "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%DOMAIN%": { get_param: domain }
-            - path: /opt/clusterware/etc/config.yml
-              permissions: '0640'
-              owner: root:root
-              content:
-                str_replace:
-                  template: |
-                    cluster:
-                      uuid: '%FLIGHT_CLUSTER_UUID%'
-                      token: '%FLIGHT_CLUSTER_TOKEN%'
-                      service_url: '%FLIGHT_SERVICE_URL%'
-                      name: '%CLUSTER_NAME%'
-                      role: 'slave'
-                      tags:
-                          scheduler_roles: ':compute:'
-                    instance:
-                      flight:
-                        uuid: '%FLIGHT_UUID%'
-                  params:
-                    "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%FLIGHT_CLUSTER_UUID%": { get_param: flight_cluster_uuid }
-                    "%FLIGHT_CLUSTER_TOKEN%": { get_param: flight_cluster_token }
-                    "%FLIGHT_SERVICE_URL%": { get_param: 'flight_service_url' }
-                    "%FLIGHT_UUID%": { get_param: flight_instance_uuid }
+                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
             - path: /opt/clusterware/etc/cluster-customizer.rc
               permissions: '0640'
               owner: root:root
@@ -681,28 +477,6 @@ resources:
     properties:
       network_id: { get_resource: api_network }
 
-  node04_prv_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_param: prv_network }
-
-  node04_api_port:
-    type: OS::Neutron::Port
-    depends_on: api_subnet
-    properties:
-      network_id: { get_resource: api_network }
-
-  node05_prv_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_param: prv_network }
-
-  node05_api_port:
-    type: OS::Neutron::Port
-    depends_on: api_subnet
-    properties:
-      network_id: { get_resource: api_network }
-
   login1:
     type: OS::Nova::Server
     properties:
@@ -754,32 +528,6 @@ resources:
         - port: { get_resource: node03_api_port }
       user_data_format: RAW
       user_data: { get_resource: node03_config }
-
-  node04:
-    type: OS::Nova::Server
-    properties:
-      name: node03
-      image: { get_param: cluster_type }
-      flavor: { get_param: compute_flavour }
-      key_name: { get_param: admin_key }
-      networks:
-        - port: { get_resource: node04_prv_port }
-        - port: { get_resource: node04_api_port }
-      user_data_format: RAW
-      user_data: { get_resource: node04_config }
-
-  node05:
-    type: OS::Nova::Server
-    properties:
-      name: node03
-      image: { get_param: cluster_type }
-      flavor: { get_param: compute_flavour }
-      key_name: { get_param: admin_key }
-      networks:
-        - port: { get_resource: node05_prv_port }
-        - port: { get_resource: node05_api_port }
-      user_data_format: RAW
-      user_data: { get_resource: node05_config }
 
 outputs:
   login1_public_ip:
