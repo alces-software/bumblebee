@@ -88,7 +88,7 @@ else
           private_ip_address: ipaddr,
         })
 
-        network_interface_id = createint.network_interface.network_interface_id
+        network_interface_id = create_int.network_interface.network_interface_id
 
         attachint = ec2.attach_network_interface({
           network_interface_id: network_interface_id,
