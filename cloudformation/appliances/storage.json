@@ -17,6 +17,16 @@
             "Type": "String",
             "Description": "Flight Instance UUID"
         },
+        "FlightCustomBucket": {
+            "Description": "Choose an S3 bucket (beginning with s3:// prefix) or leave blank for default",
+            "Type": "String",
+            "AllowedPattern": "(|^s3://[a-z0-9][-.a-z0-9][-.a-z0-9]*[a-z0-9]$)",
+            "ConstraintDescription": "Bucket must begin with s3:// or be left blank"
+        },
+        "FlightCustomProfiles": {
+            "Description": "Specify profiles separated by spaces or leave blank for default",
+            "Type": "String"
+        },
         "StorageSize": {
           "Description": "Enter the size in GB of storage to deploy",
           "Type": "String",
@@ -55,6 +65,38 @@
             "ConstraintDescription": "Please specify a valid CIDR, e.g. 0.0.0.0/0"
         }
     },
+    "Conditions": {
+        "HasFlightCustomBucket": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "FlightCustomBucket"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        },
+        "HasFlightCustomProfiles": {
+            "Fn::Not": [
+                {
+                    "Fn::Equals": [
+                        {
+                            "Ref": "FlightCustomProfiles"
+                        },
+                        ""
+                    ]
+                }
+            ]
+        },
+        "HasFlightCustom": {
+            "Fn::Or": [
+                {"Condition" : "HasFlightCustomBucket"},
+                {"Condition" : "HasFlightCustomProfiles"}
+            ]
+        }
+    },
     "Mappings": {
         "AWSRegionArch2AMI": {
             "us-east-1": {
@@ -67,7 +109,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-ba93e6c9"
+                "HVM64": "ami-734f3b00"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -361,10 +403,30 @@
                             "",
                             [
                               "#cloud-config\n",
+                              {
+                                  "Fn::If": [
+                                      "HasFlightCustom",
+                                      {
+                                          "Fn::Join": [
+                                              " ",
+                                              [
+                                                  "#=FlightCustomizer",
+                                                  {
+                                                      "Ref": "FlightCustomBucket"
+                                                  },
+                                                  {
+                                                      "Ref": "FlightCustomProfiles"
+                                                  },
+                                                  "\n"
+                                              ]
+                                          ]
+                                      },
+                                      ""
+                                  ]
+                              },
                               "write_files:\n",
                               "- content: |\n",
                               "    instance:\n",
-                              "      cluster: ", { "Ref": "AWS::StackName" }, "\n",
                               "      domain: ", { "Ref": "ClusterDomain" }, ".alces.cluster\n",
                               "      profile: storage1\n",
                               "    interfaces:\n",
@@ -393,8 +455,11 @@
                               "  path: /opt/clusterware/etc/config.yml\n",
                               "  permissions: '0640'\n",
                               "- content: |\n",
-                              "   /flightusers 10.75.0.0/16 instance\n",
-                              "   /mnt/science 10.75.0.0/16 instance\n",
+                              "    /flightusers 10.75.0.0/16 instance\n",
+                              "    /mnt/science 10.75.0.0/16 instance\n",
+                              "  owner: root:root\n",
+                              "  path: /opt/flight-storage/etc/config\n",
+                              "  permissions: 0640\n",
                               "- content: |\n",
                               "    ready\n",
                               "  owner: root:root\n",
