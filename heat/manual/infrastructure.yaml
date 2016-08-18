@@ -180,8 +180,8 @@ resources:
                       token: '%CLUSTER_TOKEN%'
                   params:
                     "%CLUSTER_NAME%": { get_param: environment_domain }
-                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
-                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
+                    "%CLUSTER_UUID%": { get_resource: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_resource: cluster_token }
             - path: /opt/clusterware/var/lib/configurator/ready
               permissions: '0640'
               owner: root:root
