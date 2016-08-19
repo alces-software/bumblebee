@@ -386,9 +386,8 @@ resources:
                 str_replace:
                   template: |
                     cluster:
-                      uuid: '%FLIGHT_CLUSTER_UUID%'
-                      token: '%FLIGHT_CLUSTER_TOKEN%'
-                      service_url: '%FLIGHT_SERVICE_URL%'
+                      uuid: '%CLUSTER_UUID%'
+                      token: '%CLUSTER_TOKEN%'
                       name: '%CLUSTER_NAME%'
                       role: 'slave'
                       tags:
