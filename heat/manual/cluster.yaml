@@ -163,8 +163,8 @@ resources:
                           scheduler_roles: ':master:'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
-                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
+                    "%CLUSTER_UUID%": { get_resource: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_resource: cluster_token }
             - path: /opt/clusterware/etc/cluster-customizer.rc
               permissions: '0640'
               owner: root:root
@@ -317,8 +317,8 @@ resources:
                           scheduler_roles: ':compute:'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
-                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
+                    "%CLUSTER_UUID%": { get_resource: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_resource: cluster_token }
             - path: /opt/clusterware/etc/cluster-customizer.rc
               permissions: '0640'
               owner: root:root
@@ -395,8 +395,8 @@ resources:
                           scheduler_roles: ':compute:'
                   params:
                     "%CLUSTER_NAME%": { get_param: cluster_name }
-                    "%CLUSTER_UUID%": { get_param: cluster_uuid }
-                    "%CLUSTER_TOKEN%": { get_param: cluster_token }
+                    "%CLUSTER_UUID%": { get_resource: cluster_uuid }
+                    "%CLUSTER_TOKEN%": { get_resource: cluster_token }
             - path: /opt/clusterware/etc/cluster-customizer.rc
               permissions: '0640'
               owner: root:root
