@@ -158,6 +158,7 @@ resources:
                       uuid: '%CLUSTER_UUID%'
                       token: '%CLUSTER_TOKEN%'
                       name: '%CLUSTER_NAME%'
+                      interface: eth1
                       role: 'master'
                       tags:
                           scheduler_roles: ':master:'
@@ -235,6 +236,7 @@ resources:
                       uuid: '%CLUSTER_UUID%'
                       token: '%CLUSTER_TOKEN%'
                       name: '%CLUSTER_NAME%'
+                      interface: eth1
                       role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'
@@ -312,6 +314,7 @@ resources:
                       uuid: '%CLUSTER_UUID%'
                       token: '%CLUSTER_TOKEN%'
                       name: '%CLUSTER_NAME%'
+                      interface: eth1
                       role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'
@@ -389,6 +392,7 @@ resources:
                       uuid: '%CLUSTER_UUID%'
                       token: '%CLUSTER_TOKEN%'
                       name: '%CLUSTER_NAME%'
+                      interface: eth1
                       role: 'slave'
                       tags:
                           scheduler_roles: ':compute:'

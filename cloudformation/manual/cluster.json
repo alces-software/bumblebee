@@ -560,6 +560,7 @@
                                     }, "'\n"]]
                                 },
                                 "      role: 'master'\n",
+                                "      interface: eth1\n",
                                 "      tags:\n",
                                 "        scheduler_roles: ':master:'\n",
                                 "  owner: root:root\n",
@@ -699,6 +700,7 @@
                                     }, "'\n"]]
                                 },
                                 "      role: 'slave'\n",
+                                "      interface: eth1\n",
                                 "      master: ", {
                                     "Fn::GetAtt": ["FlightLogin", "PrivateIp"]
                                 }, "\n",
@@ -840,6 +842,7 @@
                                         "Ref": "AWS::StackId"
                                     }, "'\n"]]
                                 },
+                                "      interface: eth1\n",
                                 "      master: ", {
                                     "Fn::GetAtt": ["FlightLogin", "PrivateIp"]
                                 }, "\n",
