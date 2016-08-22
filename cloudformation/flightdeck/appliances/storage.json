@@ -28,9 +28,9 @@
             "Type": "String"
         },
         "StorageSize": {
-          "Description": "Enter the size in GB of storage to deploy",
-          "Type": "String",
-          "Default": "50"
+            "Description": "Enter the size in GB of storage to deploy",
+            "Type": "String",
+            "Default": "50"
         },
         "ApplianceType": {
             "Description": "Select the storage appliance EC2 instance type to deploy",
@@ -54,6 +54,10 @@
             "Description": "Select the domains private subnet to join",
             "Type": "AWS::EC2::Subnet::Id"
         },
+        "APISubnet": {
+            "Description": "Select the infrastructure API subnet to join",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
         "KeyPair": {
             "Description": "Choose an existing AWS key for administrator access",
             "Type": "AWS::EC2::KeyPair::KeyName"
@@ -67,34 +71,29 @@
     },
     "Conditions": {
         "HasFlightCustomBucket": {
-            "Fn::Not": [
-                {
-                    "Fn::Equals": [
-                        {
-                            "Ref": "FlightCustomBucket"
-                        },
-                        ""
-                    ]
-                }
-            ]
+            "Fn::Not": [{
+                "Fn::Equals": [{
+                        "Ref": "FlightCustomBucket"
+                    },
+                    ""
+                ]
+            }]
         },
         "HasFlightCustomProfiles": {
-            "Fn::Not": [
-                {
-                    "Fn::Equals": [
-                        {
-                            "Ref": "FlightCustomProfiles"
-                        },
-                        ""
-                    ]
-                }
-            ]
+            "Fn::Not": [{
+                "Fn::Equals": [{
+                        "Ref": "FlightCustomProfiles"
+                    },
+                    ""
+                ]
+            }]
         },
         "HasFlightCustom": {
-            "Fn::Or": [
-                {"Condition" : "HasFlightCustomBucket"},
-                {"Condition" : "HasFlightCustomProfiles"}
-            ]
+            "Fn::Or": [{
+                "Condition": "HasFlightCustomBucket"
+            }, {
+                "Condition": "HasFlightCustomProfiles"
+            }]
         }
     },
     "Mappings": {
@@ -236,19 +235,17 @@
             "Type": "AWS::IAM::Role",
             "Properties": {
                 "AssumeRolePolicyDocument": {
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": {
-                                "Service": [
-                                    "ec2.amazonaws.com"
-                                ]
-                            },
-                            "Action": [
-                                "sts:AssumeRole"
+                    "Statement": [{
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [
+                                "ec2.amazonaws.com"
                             ]
-                        }
-                    ]
+                        },
+                        "Action": [
+                            "sts:AssumeRole"
+                        ]
+                    }]
                 }
             }
         },
@@ -256,11 +253,9 @@
             "Type": "AWS::IAM::InstanceProfile",
             "Properties": {
                 "Path": "/",
-                "Roles": [
-                    {
-                        "Ref": "MasterIAM"
-                    }
-                ]
+                "Roles": [{
+                    "Ref": "MasterIAM"
+                }]
             }
         },
         "MasterBucketPermissions": {
@@ -269,130 +264,124 @@
                 "PolicyName": "MasterBucketPermissions",
                 "PolicyDocument": {
                     "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Action": [
-                                "s3:ListBucket",
-                                "s3:CreateBucket",
-                                "s3:GetObject",
-                                "s3:DeleteObject",
-                                "s3:PutObject"
-                            ],
-                            "Resource": [
-                                "arn:aws:s3:::alces-flight-*",
-                                "arn:aws:s3:::alces-flight-*/*"
-                            ]
-                        }
-                    ]
+                    "Statement": [{
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:ListBucket",
+                            "s3:CreateBucket",
+                            "s3:GetObject",
+                            "s3:DeleteObject",
+                            "s3:PutObject"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::alces-flight-*",
+                            "arn:aws:s3:::alces-flight-*/*"
+                        ]
+                    }]
                 },
-                "Roles": [
-                    {
-                        "Ref": "MasterIAM"
-                    }
-                ]
+                "Roles": [{
+                    "Ref": "MasterIAM"
+                }]
             }
         },
         "FlightSG": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": {
-                            "Ref": "AWS::StackName"
-                        }
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": {
+                        "Ref": "AWS::StackName"
                     }
-                ],
+                }],
                 "GroupDescription": "Enable SSH access to the Alces Clusterware master node",
                 "VpcId": {
                     "Ref": "PrivateVPC"
                 },
-                "SecurityGroupIngress": [
-                    {
-                        "IpProtocol": "-1",
-                        "FromPort": "0",
-                        "ToPort": "65535",
-                        "CidrIp": "10.75.0.0/24"
-                    },
-                    {
-                        "IpProtocol": "6",
-                        "FromPort": "5900",
-                        "ToPort": "5920",
-                        "CidrIp": {
-                            "Ref": "NetworkCIDR"
-                        }
-                    },
-                    {
-                        "IpProtocol": "6",
-                        "FromPort": "22",
-                        "ToPort": "22",
-                        "CidrIp": {
-                            "Ref": "NetworkCIDR"
-                        }
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "-1",
+                    "FromPort": "0",
+                    "ToPort": "65535",
+                    "CidrIp": "10.75.0.0/24"
+                }, {
+                    "IpProtocol": "6",
+                    "FromPort": "5900",
+                    "ToPort": "5920",
+                    "CidrIp": {
+                        "Ref": "NetworkCIDR"
                     }
-                ],
-                "SecurityGroupEgress": [
-                    {
-                        "IpProtocol": "-1",
-                        "FromPort": "0",
-                        "ToPort": "65535",
-                        "CidrIp": "0.0.0.0/0"
+                }, {
+                    "IpProtocol": "6",
+                    "FromPort": "22",
+                    "ToPort": "22",
+                    "CidrIp": {
+                        "Ref": "NetworkCIDR"
                     }
-                ]
+                }],
+                "SecurityGroupEgress": [{
+                    "IpProtocol": "-1",
+                    "FromPort": "0",
+                    "ToPort": "65535",
+                    "CidrIp": "0.0.0.0/0"
+                }]
             }
         },
         "FlightStorage": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
-                "Tags": [
-                    {
-                        "Key": "Name",
-                        "Value": {
-                            "Fn::Join": [
-                                "",
-                                [
-                                    {
-                                        "Ref": "AWS::StackName"
-                                    },
-                                    "-storage1"
-                                ]
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": {
+                        "Fn::Join": [
+                            "", [{
+                                    "Ref": "AWS::StackName"
+                                },
+                                "-storage1"
                             ]
-                        }
+                        ]
                     }
-                ],
+                }],
                 "IamInstanceProfile": {
                     "Ref": "MasterIAMProfile"
                 },
                 "ImageId": {
-                    "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" }, { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "ApplianceType" }, "InstanceType" ] }, "Arch" ] } ]
+                    "Fn::FindInMap": ["AWSRegionArch2AMI", {
+                        "Ref": "AWS::Region"
+                    }, {
+                        "Fn::FindInMap": ["AWSInstanceType2Arch", {
+                            "Fn::FindInMap": ["FlightTypeToInstanceType", {
+                                "Ref": "ApplianceType"
+                            }, "InstanceType"]
+                        }, "Arch"]
+                    }]
                 },
-                "NetworkInterfaces": [
-                    {
-                        "AssociatePublicIpAddress": "True",
-                        "DeviceIndex": "0",
-						"GroupSet": [ { "Ref": "FlightSG" } ],
-                        "SubnetId": { "Ref": "PrvSubnet" }
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": "True",
+                    "DeviceIndex": "0",
+                    "GroupSet": [{
+                        "Ref": "FlightSG"
+                    }],
+                    "SubnetId": {
+                        "Ref": "PrvSubnet"
                     }
-                ],
-                "BlockDeviceMappings": [
-                    {
-                        "DeviceName": "/dev/sda1",
-                        "Ebs": {
-                            "VolumeSize": { "Ref": "StorageSize" }
+                }],
+                "BlockDeviceMappings": [{
+                    "DeviceName": "/dev/sda1",
+                    "Ebs": {
+                        "VolumeSize": {
+                            "Ref": "StorageSize"
                         }
-                    },
-                    {
-                        "DeviceName": "/dev/xvdb",
-                        "VirtualName": "ephemeral0"
-                    },
-                    {
-                        "DeviceName": "/dev/xvdc",
-                        "VirtualName": "ephemeral1"
                     }
-                ],
+                }, {
+                    "DeviceName": "/dev/xvdb",
+                    "VirtualName": "ephemeral0"
+                }, {
+                    "DeviceName": "/dev/xvdc",
+                    "VirtualName": "ephemeral1"
+                }],
                 "InstanceType": {
-                    "Fn::FindInMap": [ "FlightTypeToInstanceType", { "Ref": "ApplianceType" }, "InstanceType" ]
+                    "Fn::FindInMap": ["FlightTypeToInstanceType", {
+                        "Ref": "ApplianceType"
+                    }, "InstanceType"]
                 },
                 "KeyName": {
                     "Ref": "KeyPair"
@@ -400,71 +389,90 @@
                 "UserData": {
                     "Fn::Base64": {
                         "Fn::Join": [
-                            "",
-                            [
-                              "#cloud-config\n",
-                              {
-                                  "Fn::If": [
-                                      "HasFlightCustom",
-                                      {
-                                          "Fn::Join": [
-                                              " ",
-                                              [
-                                                  "#=FlightCustomizer",
-                                                  {
-                                                      "Ref": "FlightCustomBucket"
-                                                  },
-                                                  {
-                                                      "Ref": "FlightCustomProfiles"
-                                                  },
-                                                  "\n"
-                                              ]
-                                          ]
-                                      },
-                                      ""
-                                  ]
-                              },
-                              "write_files:\n",
-                              "- content: |\n",
-                              "    instance:\n",
-                              "      domain: ", { "Ref": "ClusterDomain" }, ".alces.cluster\n",
-                              "      profile: storage1\n",
-                              "    interfaces:\n",
-                              "      eth0:\n",
-                              "        name: eth0\n",
-                              "        ipaddr:\n",
-                              "        netmask: 255.255.255.0\n",
-                              "        skip_create: true\n",
-                              "        primary_interface: true\n",
-                              "        subnetname:\n",
-                              "        subnetid:\n",
-                              "  owner: root:root\n",
-                              "  path: /opt/bumblebee/etc/cluster.yml\n",
-                              "  permissions: '0740'\n",
-                              "- content: |\n",
-                              "    cluster:\n",
-                              "      name: '", { "Ref": "ClusterDomain" }, "'\n",
-                              "      role: 'slave'\n",
-                              "      uuid: '", { "Ref": "FlightClusterUUID" }, "'\n",
-                              "      token: '", { "Ref": "FlightClusterToken" }, "'\n",
-                              "      service_url: ", { "Ref": "FlightServiceURL" }, "\n",
-                              "    instance:\n",
-                              "      flight:\n",
-                              "        uuid: '", { "Ref": "FlightInstanceUUID" }, "'\n",
-                              "  owner: root:root\n",
-                              "  path: /opt/clusterware/etc/config.yml\n",
-                              "  permissions: '0640'\n",
-                              "- content: |\n",
-                              "    /flightusers 10.75.0.0/16 instance\n",
-                              "    /mnt/science 10.75.0.0/16 instance\n",
-                              "  owner: root:root\n",
-                              "  path: /opt/flight-storage/etc/config\n",
-                              "  permissions: 0640\n",
-                              "- content: |\n",
-                              "    ready\n",
-                              "  owner: root:root\n",
-                              "  path: /opt/clusterware/var/lib/configurator/ready\n",
-                              "  permissions: 0640\n"
+                            "", [
+                                "#cloud-config\n", {
+                                    "Fn::If": [
+                                        "HasFlightCustom", {
+                                            "Fn::Join": [
+                                                " ", [
+                                                    "#=FlightCustomizer", {
+                                                        "Ref": "FlightCustomBucket"
+                                                    }, {
+                                                        "Ref": "FlightCustomProfiles"
+                                                    },
+                                                    "\n"
+                                                ]
+                                            ]
+                                        },
+                                        ""
+                                    ]
+                                },
+                                "write_files:\n",
+                                "- content: |\n",
+                                "    instance:\n",
+                                "      domain: ", {
+                                    "Ref": "ClusterDomain"
+                                }, ".alces.cluster\n",
+                                "      profile: storage1\n",
+                                "    interfaces:\n",
+                                "      eth0:\n",
+                                "        name: eth0\n",
+                                "        ipaddr:\n",
+                                "        netmask: 255.255.255.0\n",
+                                "        skip_create: true\n",
+                                "        primary_interface: true\n",
+                                "        subnetname:\n",
+                                "        subnetid:\n",
+                                "      eth1:\n",
+                                "        name: eth1\n",
+                                "        ipaddr:\n",
+                                "        netmask: 255.255.255.0\n",
+                                "        skip_create:\n",
+                                "        primary_interface:\n",
+                                "        subnetname: ", {
+                                    "Ref": "ClusterDomain"
+                                }, "-api\n",
+                                "        subnetid: ", {
+                                    "Ref": "APISubnet"
+                                }, "\n",
+                                "  owner: root:root\n",
+                                "  path: /opt/bumblebee/etc/cluster.yml\n",
+                                "  permissions: '0640'\n",
+                                "- content: |\n",
+                                "    cluster:\n",
+                                "      name: '", {
+                                    "Ref": "ClusterDomain"
+                                }, "'\n",
+                                "      role: 'slave'\n",
+                                "      uuid: '", {
+                                    "Ref": "FlightClusterUUID"
+                                }, "'\n",
+                                "      role: slave\n",
+                                "      token: '", {
+                                    "Ref": "FlightClusterToken"
+                                }, "'\n",
+                                "      service_url: ", {
+                                    "Ref": "FlightServiceURL"
+                                }, "\n",
+                                "    instance:\n",
+                                "      flight:\n",
+                                "        uuid: '", {
+                                    "Ref": "FlightInstanceUUID"
+                                }, "'\n",
+                                "  owner: root:root\n",
+                                "  path: /opt/clusterware/etc/config.yml\n",
+                                "  permissions: '0640'\n",
+                                "- content: |\n",
+                                "    /flightusers 10.75.0.0/16 instance\n",
+                                "    /mnt/science 10.75.0.0/16 instance\n",
+                                "  owner: root:root\n",
+                                "  path: /opt/flight-storage/etc/config\n",
+                                "  permissions: 0640\n",
+                                "- content: |\n",
+                                "    ready\n",
+                                "  owner: root:root\n",
+                                "  path: /opt/clusterware/var/lib/configurator/ready\n",
+                                "  permissions: 0640\n"
 
                             ]
                         ]
@@ -475,13 +483,13 @@
     },
     "Outputs": {
         "AccessIP": {
-          "Description": "Public access IP for your Flight Storage appliance",
-          "Value": {
-              "Fn::GetAtt": [
-                  "FlightStorage",
-                  "PublicIp"
-              ]
-          }
+            "Description": "Public access IP for your Flight Storage appliance",
+            "Value": {
+                "Fn::GetAtt": [
+                    "FlightStorage",
+                    "PublicIp"
+                ]
+            }
         }
     }
 }
