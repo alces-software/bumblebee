@@ -98,7 +98,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-29cabe5a"
+                "HVM64": "ami-a43543d7"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -701,9 +701,7 @@
                                 },
                                 "      role: 'slave'\n",
                                 "      interface: eth1\n",
-                                "      master: ", {
-                                    "Fn::GetAtt": ["FlightLogin", "PrivateIp"]
-                                }, "\n",
+                                "      master: 10.75.10.20\n",
                                 "      tags:\n",
                                 "        scheduler_roles: ':compute:'\n",
                                 "  owner: root:root\n",
@@ -836,16 +834,14 @@
                                 "    cluster:\n",
                                 "      name: '", {
                                     "Ref": "ClusterName"
-                                }, "'\n",
-                                "      role: 'slave'\n", {
+                                }, "'\n", {
                                     "Fn::Join": ["", ["      identity: '", {
                                         "Ref": "AWS::StackId"
                                     }, "'\n"]]
                                 },
+                                "      role: 'slave'\n",
                                 "      interface: eth1\n",
-                                "      master: ", {
-                                    "Fn::GetAtt": ["FlightLogin", "PrivateIp"]
-                                }, "\n",
+                                "      master: 10.75.10.20\n",
                                 "      tags:\n",
                                 "        scheduler_roles: ':compute:'\n",
                                 "  owner: root:root\n",
@@ -981,9 +977,8 @@
                                 }, "'\n",
                                 "      role: 'slave'\n",
                                 "      interface: eth1\n",
-                                "      master: ", {
-                                    "Fn::GetAtt": ["FlightLogin", "PrivateIp"]
-                                }, "\n", {
+                                "      master: 10.75.10.20\n",
+                                {
                                     "Fn::Join": ["", ["      identity: '", {
                                         "Ref": "AWS::StackId"
                                     }, "'\n"]]
