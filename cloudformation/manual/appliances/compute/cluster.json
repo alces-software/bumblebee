@@ -23,7 +23,11 @@
             "Description": "Select the domain VPC to join",
             "Type": "AWS::EC2::VPC::Id"
         },
-        "FlightApiSubnet": {
+        "PrvSubnet": {
+            "Description": "Select the domains private subnet to join",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "APISubnet": {
             "Description": "Select the domains private subnet to join",
             "Type": "AWS::EC2::Subnet::Id"
         },
@@ -98,7 +102,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-a43543d7"
+                "HVM64": "ami-66fb8d15"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -376,6 +380,40 @@
                 }]
             }
         },
+        "ClusterSG": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": {
+                        "Ref": "AWS::StackName"
+                    }
+                }],
+                "GroupDescription": "Enable access to the environment",
+                "VpcId": {
+                    "Ref": "EnvironmentVPC"
+                },
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "-1",
+                    "FromPort": "0",
+                    "ToPort": "65535",
+                    "CidrIp": "10.75.0.0/16"
+                }, {
+                    "IpProtocol": "6",
+                    "FromPort": "22",
+                    "ToPort": "22",
+                    "CidrIp": {
+                        "Ref": "NetworkCIDR"
+                    }
+                }],
+                "SecurityGroupEgress": [{
+                    "IpProtocol": "-1",
+                    "FromPort": "0",
+                    "ToPort": "65535",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
         "FlightLogin": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
@@ -409,10 +447,10 @@
                     "AssociatePublicIpAddress": "True",
                     "DeviceIndex": "0",
                     "GroupSet": [{
-                        "Ref": "FlightSG"
+                        "Ref": "ClusterSG"
                     }],
                     "SubnetId": {
-                        "Ref": "FlightApiSubnet"
+                        "Ref": "APISubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{
@@ -472,18 +510,22 @@
                                 "        ipaddr:\n",
                                 "        netmask: 255.255.255.0\n",
                                 "        skip_create: true\n",
-                                "        primary_interface: true\n",
-                                "        subnetname:\n",
-                                "        subnetid:\n",
+                                "        subnetname: ", {
+                                    "Ref": "ClusterDomain"
+                                }, "\n",
+                                "        subnetid: ", {
+                                    "Ref": "APISubnet"
+                                }, "\n",
                                 "      eth1:\n",
                                 "        name: eth1\n",
-                                "        ipaddr: 10.75.10.20\n",
+                                "        ipaddr:\n",
+                                "        primary_interface: true\n",
                                 "        netmask: 255.255.255.0\n",
                                 "        subnetname: ", {
-                                    "Ref": "AWS::StackName"
-                                }, "-api\n",
+                                    "Ref": "ClusterDomain"
+                                }, "-prv\n",
                                 "        subnetid: ", {
-                                    "Ref": "FlightApiSubnet"
+                                    "Ref": "PrvSubnet"
                                 }, "\n",
                                 "  owner: root:root\n",
                                 "  path: /opt/bumblebee/etc/cluster.yml\n",
@@ -498,7 +540,7 @@
                                     }, "'\n"]]
                                 },
                                 "      role: 'master'\n",
-                                "      interface: eth1\n",
+                                "      interface: eth0\n",
                                 "      tags:\n",
                                 "        scheduler_roles: ':master:'\n",
                                 "  owner: root:root\n",
@@ -549,10 +591,10 @@
                     "AssociatePublicIpAddress": "True",
                     "DeviceIndex": "0",
                     "GroupSet": [{
-                        "Ref": "FlightSG"
+                        "Ref": "ClusterSG"
                     }],
                     "SubnetId": {
-                        "Ref": "FlightApiSubnet"
+                        "Ref": "APISubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{
@@ -618,12 +660,13 @@
                                 "      eth1:\n",
                                 "        name: eth1\n",
                                 "        ipaddr: 10.75.10.21\n",
+                                "        primary_interface: true\n",
                                 "        netmask: 255.255.255.0\n",
                                 "        subnetname: ", {
                                     "Ref": "AWS::StackName"
                                 }, "-api\n",
                                 "        subnetid: ", {
-                                    "Ref": "FlightApiSubnet"
+                                    "Ref": "APISubnet"
                                 }, "\n",
                                 "  owner: root:root\n",
                                 "  path: /opt/bumblebee/etc/cluster.yml\n",
@@ -638,8 +681,10 @@
                                     }, "'\n"]]
                                 },
                                 "      role: 'slave'\n",
-                                "      interface: eth1\n",
-                                "      master: 10.75.10.20\n",
+                                "      interface: eth0\n",
+                                "      master: ", {
+                                    "Fn::GetAtt": ["FlightLogin", "PrivateIp"]
+                                }, "\n",
                                 "      tags:\n",
                                 "        scheduler_roles: ':compute:'\n",
                                 "  owner: root:root\n",
@@ -689,10 +734,10 @@
                     "AssociatePublicIpAddress": "True",
                     "DeviceIndex": "0",
                     "GroupSet": [{
-                        "Ref": "FlightSG"
+                        "Ref": "ClusterSG"
                     }],
                     "SubnetId": {
-                        "Ref": "FlightApiSubnet"
+                        "Ref": "APISubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{
@@ -752,18 +797,18 @@
                                 "        ipaddr:\n",
                                 "        netmask: 255.255.255.0\n",
                                 "        skip_create: true\n",
-                                "        primary_interface: true\n",
                                 "        subnetname:\n",
                                 "        subnetid:\n",
                                 "      eth1:\n",
                                 "        name: eth1\n",
-                                "        ipaddr: 10.75.10.22\n",
+                                "        ipaddr:\n",
                                 "        netmask: 255.255.255.0\n",
+                                "        primary_interface: true\n",
                                 "        subnetname: ", {
                                     "Ref": "AWS::StackName"
-                                }, "-api\n",
+                                }, "-prv\n",
                                 "        subnetid: ", {
-                                    "Ref": "FlightApiSubnet"
+                                    "Ref": "APISubnet"
                                 }, "\n",
                                 "  owner: root:root\n",
                                 "  path: /opt/bumblebee/etc/cluster.yml\n",
@@ -778,8 +823,10 @@
                                     }, "'\n"]]
                                 },
                                 "      role: 'slave'\n",
-                                "      interface: eth1\n",
-                                "      master: 10.75.10.20\n",
+                                "      interface: eth0\n",
+                                "      master: ", {
+                                    "Fn::GetAtt": ["FlightLogin", "PrivateIp"]
+                                }, "\n",
                                 "      tags:\n",
                                 "        scheduler_roles: ':compute:'\n",
                                 "  owner: root:root\n",
@@ -829,10 +876,10 @@
                     "AssociatePublicIpAddress": "True",
                     "DeviceIndex": "0",
                     "GroupSet": [{
-                        "Ref": "FlightSG"
+                        "Ref": "ClusterSG"
                     }],
                     "SubnetId": {
-                        "Ref": "FlightApiSubnet"
+                        "Ref": "APISubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{
@@ -892,18 +939,18 @@
                                 "        ipaddr:\n",
                                 "        netmask: 255.255.255.0\n",
                                 "        skip_create: true\n",
-                                "        primary_interface: true\n",
                                 "        subnetname:\n",
                                 "        subnetid:\n",
                                 "      eth1:\n",
                                 "        name: eth1\n",
-                                "        ipaddr: 10.75.10.23\n",
+                                "        ipaddr:\n",
+                                "        primary_interface: true\n",
                                 "        netmask: 255.255.255.0\n",
                                 "        subnetname: ", {
                                     "Ref": "AWS::StackName"
                                 }, "-api\n",
                                 "        subnetid: ", {
-                                    "Ref": "FlightApiSubnet"
+                                    "Ref": "APISubnet"
                                 }, "\n",
                                 "  owner: root:root\n",
                                 "  path: /opt/bumblebee/etc/cluster.yml\n",
@@ -914,9 +961,10 @@
                                     "Ref": "ClusterName"
                                 }, "'\n",
                                 "      role: 'slave'\n",
-                                "      interface: eth1\n",
-                                "      master: 10.75.10.20\n",
-                                {
+                                "      interface: eth0\n",
+                                "      master: ", {
+                                    "Fn::GetAtt": ["FlightLogin", "PrivateIp"]
+                                }, "\n", {
                                     "Fn::Join": ["", ["      identity: '", {
                                         "Ref": "AWS::StackId"
                                     }, "'\n"]]

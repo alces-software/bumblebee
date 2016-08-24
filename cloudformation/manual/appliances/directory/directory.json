@@ -40,6 +40,10 @@
         "APISubnet": {
             "Description": "Select the infrastructure API subnet to join",
             "Type": "AWS::EC2::Subnet::Id"
+        },
+        "NetworkCIDR": {
+            "Description": "Select the network CIDR to allow access to the Directory appliance from",
+            "Type": "String"
         }
     },
     "Conditions": {
@@ -81,7 +85,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-e5c8bf96"
+                "HVM64": "ami-17f28464"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -283,20 +287,54 @@
                 }]
             }
         },
-        "Directory": {
-            "Type": "AWS::EC2::Instance",
-            "DependsOn": "FlightGWAttach",
+        "DirectorySG": {
+            "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "Tags": [{
                     "Key": "Name",
                     "Value": {
-                        "Fn::Join": [
-                            "", [{
-                                    "Ref": "AWS::StackName"
-                                },
-                                "-directory"
-                            ]
-                        ]
+                        "Ref": "AWS::StackName"
+                    }
+                }],
+                "GroupDescription": "Enable access to the environment",
+                "VpcId": {
+                    "Ref": "EnvironmentVPC"
+                },
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "-1",
+                    "FromPort": "0",
+                    "ToPort": "65535",
+                    "CidrIp": "10.75.0.0/16"
+                }, {
+                    "IpProtocol": "6",
+                    "FromPort": "443",
+                    "ToPort": "443",
+                    "CidrIp": {
+                        "Ref": "NetworkCIDR"
+                    }
+                }, {
+                    "IpProtocol": "6",
+                    "FromPort": "22",
+                    "ToPort": "22",
+                    "CidrIp": {
+                        "Ref": "NetworkCIDR"
+                    }
+                }],
+                "SecurityGroupEgress": [{
+                    "IpProtocol": "-1",
+                    "FromPort": "0",
+                    "ToPort": "65535",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+        "Directory": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": {
+                        "Ref": "AWS::StackName"
                     }
                 }],
                 "IamInstanceProfile": {
@@ -314,15 +352,14 @@
                     }]
                 },
                 "NetworkInterfaces": [{
+                    "GroupSet": [{
+                        "Ref": "DirectorySG"
+                    }],
                     "AssociatePublicIpAddress": "True",
                     "DeviceIndex": "0",
-                    "GroupSet": [{
-                        "Ref": "FlightSG"
-                    }],
                     "SubnetId": {
-                        "Ref": "PrvSubnet"
-                    },
-                    "PrivateIpAddress": "10.75.0.254"
+                        "Ref": "APISubnet"
+                    }
                 }],
                 "BlockDeviceMappings": [{
                     "DeviceName": "/dev/sda1",
@@ -378,7 +415,6 @@
                                 "        ipaddr:\n",
                                 "        skip_create: true\n",
                                 "        netmask: 255.255.255.0\n",
-                                "        primary_interface: true\n",
                                 "        subnetname: ", {
                                     "Ref": "EnvironmentDomain"
                                 }, "-api\n",
@@ -387,11 +423,12 @@
                                 }, "\n",
                                 "      eth1:\n",
                                 "        name: eth1\n",
-                                "        ipaddr:\n",
+                                "        ipaddr: 10.75.0.254\n",
                                 "        netmask: 255.255.255.0\n",
+                                "        primary_interface: true\n",
                                 "        subnetname: ", {
                                     "Ref": "EnvironmentDomain"
-                                }, "-api\n",
+                                }, "-prv\n",
                                 "        subnetid: ", {
                                     "Ref": "PrvSubnet"
                                 }, "\n",
@@ -407,13 +444,9 @@
                                 "      name: '", {
                                     "Ref": "EnvironmentDomain"
                                 }, "'\n",
+                                "      interface: eth0\n",
                                 "  owner: root:root\n",
                                 "  path: /opt/clusterware/etc/config.yml\n",
-                                "  permissions: '0640'\n",
-                                "- content: |\n",
-                                "    ready\n",
-                                "  owner: root:root\n",
-                                "  path: /opt/clusterware/var/lib/configurator/ready\n",
                                 "  permissions: '0640'\n"
                             ]
                         ]

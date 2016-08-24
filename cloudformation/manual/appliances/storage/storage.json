@@ -1,6 +1,10 @@
 {
-    "Description": "Deploy an Alces Flight Storage Appliance",
+    "Description": "Launch an Alces Flight Storage appliance into your existing infrastructure",
     "Parameters": {
+        "EnvironmentDomain": {
+            "Description": "Enter the domain name for your environment",
+            "Type": "String"
+        },
         "FlightCustomBucket": {
             "Description": "Choose an S3 bucket (beginning with s3:// prefix) or leave blank for default",
             "Type": "String",
@@ -11,13 +15,12 @@
             "Description": "Specify profiles separated by spaces or leave blank for default",
             "Type": "String"
         },
-        "StorageSize": {
-            "Description": "Enter the size in GB of storage to deploy",
-            "Type": "String",
-            "Default": "50"
+        "KeyPair": {
+            "Description": "Choose an existing AWS key for administrator access",
+            "Type": "AWS::EC2::KeyPair::KeyName"
         },
-        "ApplianceType": {
-            "Description": "Select the storage appliance EC2 instance type to deploy",
+        "InstanceType": {
+            "Description": "Select the directory EC2 instance type to deploy",
             "Type": "String",
             "Default": "medium-r3.2xlarge",
             "AllowedValues": [
@@ -25,10 +28,6 @@
                 "medium-r3.2xlarge",
                 "large-c4.8xlarge"
             ]
-        },
-        "ClusterDomain": {
-            "Description": "Enter the name of your cluster domain, e.g. sitename",
-            "Type": "String"
         },
         "EnvironmentVPC": {
             "Description": "Select the domain VPC to join",
@@ -38,23 +37,13 @@
             "Description": "Select the domains private subnet to join",
             "Type": "AWS::EC2::Subnet::Id"
         },
-        "APIVPC": {
-            "Description": "Select the infrastructure API VPC to join",
-            "Type": "AWS::EC2::VPC::Id"
-        },
         "APISubnet": {
             "Description": "Select the infrastructure API subnet to join",
             "Type": "AWS::EC2::Subnet::Id"
         },
-        "KeyPair": {
-            "Description": "Choose an existing AWS key for administrator access",
-            "Type": "AWS::EC2::KeyPair::KeyName"
-        },
         "NetworkCIDR": {
-            "Description": "Enter a valid CIDR that is permitted to access the cluster login node; e.g. entering 0.0.0.0/0 will allow anyone to login using the AWS key specified.",
-            "Type": "String",
-            "AllowedPattern": "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}/[0-9]{1,2}",
-            "ConstraintDescription": "Please specify a valid CIDR, e.g. 0.0.0.0/0"
+            "Description": "Select the network CIDR to allow access to the storage appliance from",
+            "Type": "String"
         }
     },
     "Conditions": {
@@ -96,7 +85,7 @@
                 "HVM64": ""
             },
             "eu-west-1": {
-                "HVM64": "ami-734f3b00"
+                "HVM64": "ami-17f28464"
             },
             "ap-southeast-1": {
                 "HVM64": ""
@@ -298,7 +287,7 @@
                 }]
             }
         },
-        "FlightSG": {
+        "DirectorySG": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "Tags": [{
@@ -307,7 +296,7 @@
                         "Ref": "AWS::StackName"
                     }
                 }],
-                "GroupDescription": "Enable SSH access to the Alces Clusterware master node",
+                "GroupDescription": "Enable access to the environment",
                 "VpcId": {
                     "Ref": "EnvironmentVPC"
                 },
@@ -315,14 +304,7 @@
                     "IpProtocol": "-1",
                     "FromPort": "0",
                     "ToPort": "65535",
-                    "CidrIp": "10.75.0.0/24"
-                }, {
-                    "IpProtocol": "6",
-                    "FromPort": "5900",
-                    "ToPort": "5920",
-                    "CidrIp": {
-                        "Ref": "NetworkCIDR"
-                    }
+                    "CidrIp": "10.75.0.0/16"
                 }, {
                     "IpProtocol": "6",
                     "FromPort": "22",
@@ -339,19 +321,13 @@
                 }]
             }
         },
-        "FlightStorage": {
+        "Storage": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
                 "Tags": [{
                     "Key": "Name",
                     "Value": {
-                        "Fn::Join": [
-                            "", [{
-                                    "Ref": "AWS::StackName"
-                                },
-                                "-storage1"
-                            ]
-                        ]
+                        "Ref": "AWS::StackName"
                     }
                 }],
                 "IamInstanceProfile": {
@@ -363,27 +339,25 @@
                     }, {
                         "Fn::FindInMap": ["AWSInstanceType2Arch", {
                             "Fn::FindInMap": ["FlightTypeToInstanceType", {
-                                "Ref": "ApplianceType"
+                                "Ref": "InstanceType"
                             }, "InstanceType"]
                         }, "Arch"]
                     }]
                 },
                 "NetworkInterfaces": [{
+                    "GroupSet": [{
+                        "Ref": "DirectorySG"
+                    }],
                     "AssociatePublicIpAddress": "True",
                     "DeviceIndex": "0",
-                    "GroupSet": [{
-                        "Ref": "FlightSG"
-                    }],
                     "SubnetId": {
-                        "Ref": "PrvSubnet"
+                        "Ref": "APISubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{
                     "DeviceName": "/dev/sda1",
                     "Ebs": {
-                        "VolumeSize": {
-                            "Ref": "StorageSize"
-                        }
+                        "VolumeSize": "50"
                     }
                 }, {
                     "DeviceName": "/dev/xvdb",
@@ -394,7 +368,7 @@
                 }],
                 "InstanceType": {
                     "Fn::FindInMap": ["FlightTypeToInstanceType", {
-                        "Ref": "ApplianceType"
+                        "Ref": "InstanceType"
                     }, "InstanceType"]
                 },
                 "KeyName": {
@@ -425,58 +399,48 @@
                                 "- content: |\n",
                                 "    instance:\n",
                                 "      domain: ", {
-                                    "Ref": "ClusterDomain"
+                                    "Ref": "EnvironmentDomain"
                                 }, ".alces.cluster\n",
-                                "      profile: storage1\n",
+                                "      profile: directory\n",
                                 "    interfaces:\n",
                                 "      eth0:\n",
                                 "        name: eth0\n",
                                 "        ipaddr:\n",
-                                "        netmask: 255.255.255.0\n",
                                 "        skip_create: true\n",
-                                "        primary_interface: true\n",
-                                "        subnetname:\n",
-                                "        subnetid:\n",
-                                "      eth1:\n",
-                                "        name: eth1\n",
-                                "        ipaddr:\n",
                                 "        netmask: 255.255.255.0\n",
-                                "        skip_create:\n",
                                 "        subnetname: ", {
-                                    "Ref": "AWS::StackName"
+                                    "Ref": "EnvironmentDomain"
                                 }, "-api\n",
                                 "        subnetid: ", {
                                     "Ref": "APISubnet"
                                 }, "\n",
-                                "        subnetid:\n",
+                                "      eth1:\n",
+                                "        name: eth1\n",
+                                "        ipaddr:\n",
+                                "        netmask: 255.255.255.0\n",
+                                "        primary_interface: true\n",
+                                "        subnetname: ", {
+                                    "Ref": "EnvironmentDomain"
+                                }, "-prv\n",
+                                "        subnetid: ", {
+                                    "Ref": "PrvSubnet"
+                                }, "\n",
                                 "  owner: root:root\n",
                                 "  path: /opt/bumblebee/etc/cluster.yml\n",
                                 "  permissions: '0740'\n",
                                 "- content: |\n",
-                                "    cluster:\n",
-                                "      name: '", {
-                                    "Ref": "ClusterDomain"
-                                }, "'\n",
-                                "      role: 'slave'\n", {
+                                "    cluster:\n", {
                                     "Fn::Join": ["", ["      identity: '", {
                                         "Ref": "AWS::StackId"
                                     }, "'\n"]]
                                 },
+                                "      name: '", {
+                                    "Ref": "EnvironmentDomain"
+                                }, "'\n",
+                                "      interface: eth0\n",
                                 "  owner: root:root\n",
                                 "  path: /opt/clusterware/etc/config.yml\n",
-                                "  permissions: '0640'\n",
-                                "- content: |\n",
-                                "    /flightusers 10.75.0.0/16 instance\n",
-                                "    /mnt/science 10.75.0.0/16 instance\n",
-                                "  owner: root:root\n",
-                                "  path: /opt/flight-storage/etc/config\n",
-                                "  permissions: 0640\n",
-                                "- content: |\n",
-                                "    ready\n",
-                                "  owner: root:root\n",
-                                "  path: /opt/clusterware/var/lib/configurator/ready\n",
-                                "  permissions: 0640\n"
-
+                                "  permissions: '0640'\n"
                             ]
                         ]
                     }
@@ -486,10 +450,10 @@
     },
     "Outputs": {
         "AccessIP": {
-            "Description": "Public access IP for your Flight Storage appliance",
+            "Description": "Public access IP for your Flight Compute environment. Use together with your chosen username to gain SSH access",
             "Value": {
                 "Fn::GetAtt": [
-                    "FlightStorage",
+                    "Directory",
                     "PublicIp"
                 ]
             }
