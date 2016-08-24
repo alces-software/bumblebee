@@ -23,7 +23,7 @@
             "Description": "Select the domain VPC to join",
             "Type": "AWS::EC2::VPC::Id"
         },
-        "PrvSubnet": {
+        "FlightApiSubnet": {
             "Description": "Select the domains private subnet to join",
             "Type": "AWS::EC2::Subnet::Id"
         },
@@ -221,27 +221,6 @@
         }
     },
     "Resources": {
-        "FlightApiSubnet": {
-            "Type": "AWS::EC2::Subnet",
-            "Properties": {
-                "VpcId": {
-                    "Ref": "EnvironmentVPC"
-                },
-                "CidrBlock": "10.75.10.0/24",
-                "Tags": [{
-                    "Key": "Name",
-                    "Value": {
-                        "Fn::Join": [
-                            "", [{
-                                    "Ref": "AWS::StackName"
-                                },
-                                "-api"
-                            ]
-                        ]
-                    }
-                }]
-            }
-        },
         "MasterIAM": {
             "Type": "AWS::IAM::Role",
             "Properties": {
@@ -397,47 +376,6 @@
                 }]
             }
         },
-        "FlightSG": {
-            "Type": "AWS::EC2::SecurityGroup",
-            "Properties": {
-                "Tags": [{
-                    "Key": "Name",
-                    "Value": {
-                        "Ref": "AWS::StackName"
-                    }
-                }],
-                "GroupDescription": "Enable SSH access to the Alces Clusterware master node",
-                "VpcId": {
-                    "Ref": "EnvironmentVPC"
-                },
-                "SecurityGroupIngress": [{
-                    "IpProtocol": "-1",
-                    "FromPort": "0",
-                    "ToPort": "65535",
-                    "CidrIp": "10.75.0.0/24"
-                }, {
-                    "IpProtocol": "6",
-                    "FromPort": "5900",
-                    "ToPort": "5920",
-                    "CidrIp": {
-                        "Ref": "NetworkCIDR"
-                    }
-                }, {
-                    "IpProtocol": "6",
-                    "FromPort": "22",
-                    "ToPort": "22",
-                    "CidrIp": {
-                        "Ref": "NetworkCIDR"
-                    }
-                }],
-                "SecurityGroupEgress": [{
-                    "IpProtocol": "-1",
-                    "FromPort": "0",
-                    "ToPort": "65535",
-                    "CidrIp": "0.0.0.0/0"
-                }]
-            }
-        },
         "FlightLogin": {
             "Type": "AWS::EC2::Instance",
             "Properties": {
@@ -474,7 +412,7 @@
                         "Ref": "FlightSG"
                     }],
                     "SubnetId": {
-                        "Ref": "PrvSubnet"
+                        "Ref": "FlightApiSubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{
@@ -614,7 +552,7 @@
                         "Ref": "FlightSG"
                     }],
                     "SubnetId": {
-                        "Ref": "PrvSubnet"
+                        "Ref": "FlightApiSubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{
@@ -754,7 +692,7 @@
                         "Ref": "FlightSG"
                     }],
                     "SubnetId": {
-                        "Ref": "PrvSubnet"
+                        "Ref": "FlightApiSubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{
@@ -894,7 +832,7 @@
                         "Ref": "FlightSG"
                     }],
                     "SubnetId": {
-                        "Ref": "PrvSubnet"
+                        "Ref": "FlightApiSubnet"
                     }
                 }],
                 "BlockDeviceMappings": [{

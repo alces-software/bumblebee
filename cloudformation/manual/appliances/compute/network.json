@@ -1,0 +1,46 @@
+{
+    "Description": "Cluster network template",
+    "Parameters": {
+        "NetworkCIDR": {
+            "Description": "Enter a valid CIDR that is permitted to access the cluster login node; e.g. entering 0.0.0.0/0 will allow anyone to login using the AWS key specified.",
+            "Type": "String",
+            "AllowedPattern": "[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}/[0-9]{1,2}",
+            "ConstraintDescription": "Please specify a valid CIDR, e.g. 0.0.0.0/0"
+        },
+        "EnvironmentVPC": {
+            "Description": "Select the environment VPC to join",
+            "Type": "AWS::EC2::VPC::Id"
+        }
+    },
+    "Resources": {
+        "APISubnet": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "EnvironmentVPC"
+                },
+                "CidrBlock": "10.75.10.0/24",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": {
+                        "Fn::Join": [
+                            "", [{
+                                    "Ref": "AWS::StackName"
+                                },
+                                "-api"
+                            ]
+                        ]
+                    }
+                }]
+            }
+        }
+    },
+    "Outputs": {
+        "APISubnet": {
+            "Description": "API Subnet ID",
+            "Value": {
+                "Ref": "APISubnet"
+            }
+        }
+    }
+}
