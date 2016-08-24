@@ -156,3 +156,5 @@ else
   end
 
 end
+
+File.write('/opt/clusterware/var/lib/configurator/ready', 'ready')
