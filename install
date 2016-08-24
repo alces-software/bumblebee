@@ -12,13 +12,7 @@ BUMBLEBEEDIR="/opt/bumblebee"
 yum -y install ruby
 gem install aws-sdk
 
-if [ ! $(which git) ];
-then
-    yum -y install git
-    git clone https://github.com/alces-software/bumblebee.git $BUMBLEBEEDIR
-else
-    git clone https://github.com/alces-software/bumblebee.git $BUMBLEBEEDIR
-fi
+git clone -b swap-networks https://github.com/alces-software/bumblebee.git $BUMBLEBEEDIR
 
 # Set up interface configurator
 cp $BUMBLEBEEDIR/dist/init/systemd/bumblebee-configurator.service /etc/systemd/system/bumblebee-configurator.service

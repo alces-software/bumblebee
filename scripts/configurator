@@ -14,10 +14,10 @@ require 'socket'
 metadata_endpoint = 'http://169.254.169.254/latest/meta-data/'
 platform = Net::HTTP.get(URI.parse(metadata_endpoint + 'network/'))
 
-if platform["interfaces/"]
+if platform['interfaces/']
 
   platform = 'aws'
-  instance_id = Net::HTTP.get(URI.parse(metadata_endpoint + 'instance-id' ))
+  instance_id = Net::HTTP.get(URI.parse(metadata_endpoint + 'instance-id'))
   puts "Found instance ID: #{instance_id}"
   getregion = Net::HTTP.get(URI.parse(metadata_endpoint + 'placement/availability-zone'))
   region = getregion[0..-2]
@@ -31,7 +31,7 @@ if platform["interfaces/"]
 elsif platform['Not Found']
 
   platform = 'openstack'
-  instance_id = Net::HTTP.get(URI.parse(metadata_endpoint + 'local-ipv4' ))
+  instance_id = Net::HTTP.get(URI.parse(metadata_endpoint + 'local-ipv4'))
 
 end
 
@@ -43,11 +43,11 @@ nodename = clusterconfig['profile']
 domain = clusterconfig['domain']
 cluster = clusterconfig['cluster']
 
-if cluster.to_s.empty?
-  fqdn = "#{nodename}.#{domain}"
-else
-  fqdn = "#{nodename}.#{cluster}.#{domain}"
-end
+fqdn = if cluster.to_s.empty?
+         "#{nodename}.#{domain}"
+       else
+         "#{nodename}.#{cluster}.#{domain}"
+       end
 
 # Configure hostname and /etc/hosts
 
@@ -58,18 +58,17 @@ system `sed -i "/.*::1 #{nodename}.*/d" /etc/hosts`
 
 if interfaceconfig.nil?
 
-  puts "No additional interfaces found. Setting default interface up"
+  puts 'No additional interfaces found. Setting default interface up'
 
   eth0_ip = Net::HTTP.get(URI.parse(metadata_endpoint + 'local-ipv4'))
 
-  open('/etc/hosts', 'a') { |w|
+  open('/etc/hosts', 'a') do |w|
     w.puts "#{eth0_ip} #{fqdn} #{nodename}"
-  }
+  end
 
 else
 
-  interfaceconfig.each do |interface,info|
-
+  interfaceconfig.each do |_interface, info|
     intname = info['name']
     ipaddr = info['ipaddr']
     netmask = info['netmask']
@@ -77,34 +76,32 @@ else
     subnetname = info['subnetname']
     skip_create = info['skip_create']
     primary_interface = info['primary_interface']
-    deviceindex = intname.gsub(/[^0-9]/,"")
+    deviceindex = intname.gsub(/[^0-9]/, '')
 
     if platform == 'aws'
       if skip_create.to_s.empty?
-
-        create_int = ec2.create_network_interface({
-          subnet_id: subnetid,
-          description: "#{subnetname} interface for #{instance_id}",
-          private_ip_address: ipaddr,
-        })
+        if ipaddr.to_s.empty?
+          create_int = ec2.create_network_interface(subnet_id: subnetid,
+                                                    description: "#{subnetname} interface for #{instance_id}")
+        else
+          create_int = ec2.create_network_interface(subnet_id: subnetid,
+                                                    description: "#{subnetname} interface for #{instance_id}",
+                                                    private_ip_address: ipaddr)
+        end
 
         network_interface_id = create_int.network_interface.network_interface_id
 
-        attachint = ec2.attach_network_interface({
-          network_interface_id: network_interface_id,
-          instance_id: instance_id,
-          device_index: deviceindex,
-        })
+        attachint = ec2.attach_network_interface(network_interface_id: network_interface_id,
+                                                 instance_id: instance_id,
+                                                 device_index: deviceindex)
 
         attachment_id = attachint.attachment_id
 
-        modify_int = ec2.modify_network_interface_attribute({
-          network_interface_id: network_interface_id,
-          attachment: {
-            attachment_id: attachment_id,
-            delete_on_termination: true,
-          }
-        })
+        ec2.modify_network_interface_attribute(network_interface_id: network_interface_id,
+                                               attachment: {
+                                                 attachment_id: attachment_id,
+                                                 delete_on_termination: true
+                                               })
 
       end
     end
@@ -115,7 +112,7 @@ else
     system `systemctl restart iptables`
 
     if skip_create.to_s.empty?
-      intconfig=File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
+      intconfig = File.open("/etc/sysconfig/network-scripts/ifcfg-#{intname}", 'w')
       intconfig.puts "DEVICE=\"#{intname}\"\n"
       intconfig.puts "ONBOOT=\"yes\"\n"
       intconfig.puts "TYPE=\"Ethernet\"\n"
@@ -143,8 +140,7 @@ else
 
       puts "Configuring #{instance_id} as #{fqdn} with primary interface #{intname}"
 
-      open('/etc/hosts', 'a') { |w|
-
+      open('/etc/hosts', 'a') do |w|
         if ipaddr.to_s.empty?
 
           dhcpip = `ifconfig #{intname} | grep "inet" | awk 'NR==1{print $2}'`
@@ -155,9 +151,8 @@ else
           w.puts "#{ipaddr} #{fqdn} #{nodename}"
 
         end
-      }
+      end
     end
-
   end
 
 end
