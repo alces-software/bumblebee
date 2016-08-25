@@ -11,6 +11,7 @@ After=cloud-init.service
 [Service]
 Type=oneshot
 ExecStart=/opt/bumblebee/scripts/configurator
+ExecStop=/opt/bumblebee/scripts/deconfigurator
 RemainAfterExit=yes
 TimeoutSec=0
 StandardOutput=journal+console
