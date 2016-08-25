@@ -4,7 +4,7 @@
 #### Bumblebee - Configurator
 #### Copyright (c) 2016 Alces Software Ltd
 ####
-##################################################################################
+################################################################################
 require 'yaml'
 require 'net/http'
 require 'aws-sdk'
@@ -19,7 +19,9 @@ if platform['interfaces/']
   platform = 'aws'
   instance_id = Net::HTTP.get(URI.parse(metadata_endpoint + 'instance-id'))
   puts "Found instance ID: #{instance_id}"
-  getregion = Net::HTTP.get(URI.parse(metadata_endpoint + 'placement/availability-zone'))
+  getregion = Net::HTTP.get(URI.parse(
+                              metadata_endpoint + 'placement/availability-zone'
+  ))
   region = getregion[0..-2]
   puts "Found AWS region: #{region}"
 
@@ -96,6 +98,9 @@ else
                                                  device_index: deviceindex)
 
         attachment_id = attachint.attachment_id
+        config['interfaces'][intname]['interface_id'] = network_interface_id
+        config['interfaces'][intname]['attachment_id'] = attachment_id
+        File.open('/opt/bumblebee/etc/cluster.yml', 'w') { |f| f.write config.to_yaml }
 
         ec2.modify_network_interface_attribute(network_interface_id: network_interface_id,
                                                attachment: {

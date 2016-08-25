@@ -1,0 +1,44 @@
+#!/bin/ruby
+################################################################################
+####
+#### Bumblebee - Deconfigurator
+#### Copyright (c) 2016 Alces Software Ltd
+####
+################################################################################
+require 'yaml'
+require 'net/http'
+require 'aws-sdk'
+require 'socket'
+
+# Collect instance information
+metadata_endpoint = 'http://169.254.169.254/latest/meta-data/'
+platform = Net::HTTP.get(URI.parse(metadata_endpoint + 'network/'))
+if platform['interfaces/']
+  platform = 'aws'
+  getregion = Net::HTTP.get(URI.parse(metadata_endpoint + 'placement/availability-zone'))
+  region = getregion[0..-2]
+  # Set up the EC2 client
+  Aws.config[:region] = region
+  Aws.config[:credentials] = Aws::InstanceProfileCredentials.new
+  ec2 = Aws::EC2::Client.new
+end
+config = YAML.load_file('/opt/bumblebee/etc/cluster.yml')
+interfaceconfig = config['interfaces']
+if interfaceconfig.nil?
+  puts 'No deconfiguration required'
+elsif platform == 'aws'
+  interfaceconfig.each do |_interface, info|
+    intname = info['name']
+    attachment_id = info['attachment_id']
+    interface_id = info['interface_id']
+    skip_create = info['skip_create']
+    next unless platform == 'aws'
+    next unless skip_create.to_s.empty?
+    puts "Detaching #{intname}"
+    ec2.detach_network_interface(attachment_id: attachment_id,
+                                 force: true)
+    sleep 5
+    puts "Deleting #{intname}"
+    ec2.delete_network_interface(network_interface_id: interface_id)
+  end
+end

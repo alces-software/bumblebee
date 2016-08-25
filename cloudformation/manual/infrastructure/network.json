@@ -15,7 +15,7 @@
                 "EnableDnsHostnames": "true"
             }
         },
-        "FlightRouteTable": {
+        "RouteTable": {
             "Type": "AWS::EC2::RouteTable",
             "DependsOn": "EnvironmentVPC",
             "Properties": {
@@ -72,11 +72,11 @@
                 }]
             }
         },
-        "FlightGW": {
+        "InternetGateway": {
             "Type": "AWS::EC2::InternetGateway",
             "DependsOn": "EnvironmentVPC"
         },
-        "FlightGWAttach": {
+        "InternetGatewayAttach": {
             "Type": "AWS::EC2::VPCGatewayAttachment",
             "DependsOn": "EnvironmentVPC",
             "Properties": {
@@ -84,44 +84,44 @@
                     "Ref": "EnvironmentVPC"
                 },
                 "InternetGatewayId": {
-                    "Ref": "FlightGW"
+                    "Ref": "InternetGateway"
                 }
             }
         },
-        "FlightRoute": {
+        "DefaultRoutes": {
             "Type": "AWS::EC2::Route",
-            "DependsOn": "FlightGWAttach",
+            "DependsOn": "InternetGatewayAttach",
             "Properties": {
                 "RouteTableId": {
-                    "Ref": "FlightRouteTable"
+                    "Ref": "RouteTable"
                 },
                 "DestinationCidrBlock": "0.0.0.0/0",
                 "GatewayId": {
-                    "Ref": "FlightGW"
+                    "Ref": "InternetGateway"
                 }
             }
         },
         "PrvSubnetToRouteTable": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "DependsOn": "FlightRouteTable",
+            "DependsOn": "RouteTable",
             "Properties": {
                 "SubnetId": {
                     "Ref": "PrvSubnet"
                 },
                 "RouteTableId": {
-                    "Ref": "FlightRouteTable"
+                    "Ref": "RouteTable"
                 }
             }
         },
         "APISubnetToRouteTable": {
             "Type": "AWS::EC2::SubnetRouteTableAssociation",
-            "DependsOn": "FlightRouteTable",
+            "DependsOn": "RouteTable",
             "Properties": {
                 "SubnetId": {
                     "Ref": "APISubnet"
                 },
                 "RouteTableId": {
-                    "Ref": "FlightRouteTable"
+                    "Ref": "RouteTable"
                 }
             }
         }
@@ -148,7 +148,7 @@
         "RouteTableId": {
             "Description": "VPC Route Table Id",
             "Value": {
-                "Ref": "FlightRouteTable"
+                "Ref": "RouteTable"
             }
         }
     }
