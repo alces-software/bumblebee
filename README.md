@@ -1,110 +1,94 @@
 # Bumblebee :honeybee:
 
-Launch static environments in the Cloud :cloud:
+Interface configuration and management for Cloud instances, for use with an Alces directory appliance. 
 
-## Install :rocket:
+## Install
 
-* CentOS/el 7:
-
-```
-$ curl -sL http://git.io/bumblebee-installer | /bin/bash
-```
-
-## Build an image :cloud:
-
-### EC2 AMI
-
-Using the Alces image creator: 
-
-* Create the AMI
+*(as root)*
 
 ```bash
-$ ./ami-creator -k $YOURAWSKEY -b 1.4.1 -i static -t static
+curl -sL https://git.io/bumblebee-installer | /bin/bash
 ```
 
-* Load the AMI into the CloudFormation template for your desired region, e.g.: 
+## Configuration
 
-```json
-"Mappings": {
-    "AWSRegionArch2AMI": {
-        "eu-west-1": {
-            "HVM64": "ami-123456"
-        }
-    }
-}
-```
-
-* The CloudFormation contains default example settings for two nodes, once you have checked the settings, and verified your CloudFormation parameters - launch the CloudFormation template
-
-### OpenStack image
-
-Using an Alces build machine:
-
-* Check out the `imageware` repository, then switch to the `static` branch. Create the image:
-
-```bash
-$ ./makeimage static $VERSION
-```
-
-* Copy the image to your preferred OpenStack installation using your transfer method of choice
-
-* Once authenticated against the environment - upload the image to Glance: 
-
-```bash
-$ glance image-upload \
-    --container-format bare \
-    --disk-format qcow2 \
-    --min-disk 1 \
-    --file $PATHTOIMAGE \
-    --is-public true \
-    --name bumblebee \
-    --human-readable \
-    --progress
-```
-
-* The Heat template contains default example settings for two nodes, once you have checked the settings, and verified your Heat template parameters - launch the Heat template. 
-
-## Configuration options
-
-The Bumblebee configurator service reads from the configuration file written at start-up by cloud-init - located at `/opt/bumblebee/etc/cluster.yml`
-
-An example configuration file looks like the following:
+Multiple interface configurations can be provided for multiple networks, using the following example configuration file: 
 
 ```yaml
 instance:
-  cluster: myclustername
-  domain: alces.network
+  domain: bigtown.alces.network
+  cluster: littlevillage
   profile: login1
 interfaces:
+  eth0:
+    name: eth0
+    ipaddr:
+    netmask: 255.255.255.0
+    skip_create: true
+    subnetname: bigtown-prv
+    subnetid: sub-123456
   eth1:
     name: eth1
-    ipaddr: 10.75.10.10
+    ipaddr:
     netmask: 255.255.255.0
     primary_interface: true
-    subnetname: %CLUSTERNAME%-build
-    subnetid: (aws specific)
-  eth2:
-    name: eth2
-    ipaddr: 10.75.20.10
-    netmask: 255.255.255.0
-    subnetname: %CLUSTERNAME%-prv
-    subnetid: (aws specific)
+    subnetname: littlevillage-api
+    subnetid: sub-123457
+    interface_id:
+    attachment_id:
 ```
 
-You can configure as many or as few interfaces as you wish to meet your desired network requirements. 
+### `instance`
 
-### Using pre-defined static IP addresses
+#### `domain`
 
-To use a pre-defined, static IP address for each deployed node - the `ipaddr` and `netmask` fields must be filled in - for example:
+Enter the domain of your IPA realm, e.g. `bigtown.alces.network`
 
-```yaml
-ipaddr: 10.75.20.10
-netmask: 255.255.255.0
-```
+#### `cluster`
 
-If you wish to obtain an IP address using your networks DHCP server - simply remove the `ipaddr` value, or line entirely: 
+If the instance is part of a compute environment - enter the cluster name, else - leave this field blank.
 
-```yaml
-ipaddr:
-netmask: 255.255.255.0
-```
+#### `profile`
+
+Enter the desired profile or instance name - for example `login1` with a `domain` `bigtown.alces.network` and `cluster` `littlevillage` would set the instance hostname `login1.littlevillage.bigtown.alces.network`
+
+### `interfaces`
+
+#### `name`
+
+Enter the interface name for each interface 
+
+#### `ipaddr`
+
+Optionally choose to set an IP address for the instance on the network used for that interface. If no IP address is set - the configurator will use the platforms DHCP server to gather its IP adress. 
+
+#### `netmask`
+
+Enter the netmask for the network used, this will typically be `255.255.255.0`
+
+#### `skip_create`
+
+The `skip_create` option allows you to skip creation of an interface. This is typically only useful for the instance default interface. The `skip_create` option will prevent the interface configurator from attempting to perform any platform-specific creation of network interfaces etc. 
+
+Set this option to `true` to skip interface creation, or leave the field blank
+
+#### `primary_interface`
+
+This option should only be used once - and is used to identify the instances primary interface. When used with an Alces directory appliance, the `primary_interface` option should be used on the interface connected to the infrastructure private network.
+
+#### `subnetname`
+
+This option is purely for cosmetic and logging purposes and used to identify which network each interface belongs to.
+
+#### `subnetid`
+
+This option provides the interface configurator the required information needed to manage its network interfaces on a given network.
+
+#### `interface_id` *AWS only*
+
+This option should be left blank, and is used by the interface configurator to save details of each network interfaces attachment information
+
+#### `attachment_id` *AWS only*
+
+This option should be left blank, and is used by the interface configurator to save details of each network interfaces attachment information
+
