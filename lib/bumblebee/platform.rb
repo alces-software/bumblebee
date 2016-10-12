@@ -40,7 +40,7 @@ module Bumblebee
                        else
                          local_ip
                        end
-    end
+   end
 
     def local_ip
       @local_ip ||= Ec2Metadata[:local_ipv4]
@@ -56,7 +56,8 @@ module Bumblebee
                                  Aws::InstanceProfileCredentials.new
                                end
                  Aws::EC2::Client.new(region: region,
-                                      credentials: credentials)
+                                      credentials: credentials,
+                                      retry_limit: 10)
                end
     end
 
