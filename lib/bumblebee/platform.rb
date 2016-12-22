@@ -81,7 +81,7 @@ module Bumblebee
                 private_ip_address: iface.ipaddr.to_s
               }
             )
-          rescue Aws::EC2::Errors::InvalidIPAddressInUse
+          rescue Aws::EC2::Errors::InvalidIPAddressInUse, Aws::EC2::Errors::InvalidParameterValue
             # increment IP address and try again
             if IPAddr === iface.ipaddr
               iface.ipaddr = iface.ipaddr.succ
