@@ -23,18 +23,20 @@ require 'bumblebee/route'
 
 module Bumblebee
   class Interface
-    attr_accessor :name, :subnet_name, :subnet_id, :ipaddr, :netmask, :routes
-    attr_accessor :is_skip, :is_primary, :is_dhcp, :is_authoritative, :device_index
+    attr_accessor :name, :subnet_name, :subnet_id, :ipaddr, :netmask, :routes, :origin
+    attr_accessor :is_skip, :is_primary, :is_dhcp, :is_authoritative, :device_index, :is_rewind
     def initialize(metadata)
       self.name = metadata['name']
       self.subnet_name = metadata['subnet_name'] || metadata['subnetname']
       self.subnet_id = metadata['subnet_id'] || metadata['subnetid']
       self.ipaddr = metadata['ipaddr'] unless metadata['ipaddr'].to_s.empty?
+      self.origin = metadata['origin'] unless metadata['origin'].to_s.empty?
       self.is_dhcp = (metadata['dhcp'] == true)
       self.netmask = metadata['netmask']
       self.is_primary = (metadata['primary'] == true)
       self.is_skip = (metadata['skip_create'] == true)
       self.is_authoritative = (metadata['authoritative'] == true)
+      self.is_rewind = (metadata['rewind'] == true)
       self.device_index = metadata['name'][-1]
       self.routes = (metadata['routes'] || []).map(&Route.method(:new)) || []
     end
@@ -43,8 +45,19 @@ module Bumblebee
       @ipaddr ||=
         if dhcp?
           Bumblebee.interface_ip(name)
+        elsif rewind?
+          IPAddr.new(origin)
         else
           allocate_ip
+        end
+    end
+
+    def netmask
+      @netmask ||=
+        if dhcp?
+          IPAddr.new('255.255.255.255').mask(Bumblebee.interface_network(name).split('/')[1].to_i).to_s
+        else
+          raise "Netmask must be supplied."
         end
     end
 
@@ -62,6 +75,10 @@ module Bumblebee
 
     def authoritative?
       is_authoritative
+    end
+
+    def rewind?
+      is_rewind
     end
 
     def configure

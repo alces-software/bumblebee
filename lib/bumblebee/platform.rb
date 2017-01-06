@@ -84,7 +84,11 @@ module Bumblebee
           rescue Aws::EC2::Errors::InvalidIPAddressInUse, Aws::EC2::Errors::InvalidParameterValue
             # increment IP address and try again
             if IPAddr === iface.ipaddr
-              iface.ipaddr = iface.ipaddr.succ
+              if iface.rewind?
+                iface.ipaddr = IPAddr.new(iface.ipaddr.to_i - 1, Socket::AF_INET)
+              else
+                iface.ipaddr = iface.ipaddr.succ
+              end
               retry
             else
               raise
@@ -115,7 +119,7 @@ module Bumblebee
       if aws?
         subnets = ec2.describe_subnets.subnets
         if subnet = subnets.find{|s| s.subnet_id == iface.subnet_id}
-          IPAddr.new(IPAddr.new(subnet.cidr_block).to_i + 4, family = Socket::AF_INET)
+          IPAddr.new(IPAddr.new(subnet.cidr_block).to_i + 4, Socket::AF_INET)
         else
           raise "Unable to find subnet for interface"
         end

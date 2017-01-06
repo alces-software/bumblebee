@@ -25,10 +25,11 @@ require 'bumblebee/interface'
 
 module Bumblebee
   class Config
-    attr_accessor :hostname, :domain, :cluster, :interfaces, :access_key_id, :secret_access_key
+    attr_accessor :hostname, :hostname_prefix, :domain, :cluster, :interfaces, :access_key_id, :secret_access_key
     def initialize(cfg_file)
       config = YAML.load_file(cfg_file)
       self.hostname = config['hostname']
+      self.hostname_prefix = config['hostname_prefix'] || "flight-"
       self.domain = config['domain']
       self.cluster = config['cluster'] unless config['cluster'].to_s.empty?
       self.interfaces = (config['interfaces'] || []).map(&Interface.method(:new))
@@ -65,7 +66,7 @@ module Bumblebee
       # take into account the 3 addresses at the beginning of the
       # subnet are reserved on AWS.
       numeral -= 3 if Bumblebee.platform.aws? && (prefix.nil? || prefix == 'a')
-      "flight-#{prefix}#{sprintf('%03d',numeral)}"
+      "#{hostname_prefix}#{prefix}#{sprintf('%03d',numeral)}"
     end
   end
 end
