@@ -74,7 +74,7 @@ module Bumblebee
 
     def update_firewall
       system(%(sed -i '/#APPLIANCERULES#/a -A INPUT -i #{name} -j ACCEPT' /etc/sysconfig/iptables))
-      system(%(systemctl restart iptables))
+      system(%(iptables -I INPUT -i #{name} -j ACCEPT))
     end
 
     def ifup
