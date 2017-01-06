@@ -40,5 +40,9 @@ module Bumblebee
     def interface_network(name)
       `ip -o -4 address show dev #{name} | head -n 1 | grep ' brd ' | sed 's/.*inet \(\S*\) brd.*/\1/g'`.chomp
     end
+
+    def interface_exists?(name)
+      system("ip -o -4 link show #{name} 1>/dev/null 2>/dev/null")
+    end
   end
 end

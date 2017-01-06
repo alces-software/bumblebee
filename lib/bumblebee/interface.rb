@@ -66,7 +66,7 @@ module Bumblebee
 
     def configure
       unless skip?
-        Bumblebee.platform.create(self)
+        Bumblebee.platform.create(self) unless Bumblebee.interface_exists?(name)
         update_firewall
         ifup
       end
