@@ -112,7 +112,7 @@ module Bumblebee
       end
       if routes.any?
         routes.each_with_index do |route, c|
-          File.open("/etc/sysconfig/network-scripts/route-#{name}", 'w') do |f|
+          File.open("/etc/sysconfig/network-scripts/route-#{name}", 'a') do |f|
             f.puts %(ADDRESS#{c}="#{route.address}")
             f.puts %(NETMASK#{c}="#{route.netmask}")
             f.puts %(GATEWAY#{c}="#{route.gateway}")
