@@ -82,7 +82,9 @@ module Bumblebee
     end
 
     def configure
-      unless skip?
+      if skip?
+        create_routes(true)
+      else
         Bumblebee.platform.create(self) unless Bumblebee.interface_exists?(name)
         update_firewall
         ifup
@@ -110,17 +112,24 @@ module Bumblebee
           f.puts %(NETMASK="#{netmask}")
         end
       end
+      create_routes(false)
+      system(%(/bin/bash -c 'while ! /sbin/ip link show "#{name}"; do sleep 1; done'))
+      system(%(/sbin/ifup #{name} > /dev/null))
+    end
+
+    def create_routes(update_route_table = false)
       if routes.any?
         routes.each_with_index do |route, c|
           File.open("/etc/sysconfig/network-scripts/route-#{name}", 'a') do |f|
             f.puts %(ADDRESS#{c}="#{route.address}")
             f.puts %(NETMASK#{c}="#{route.netmask}")
             f.puts %(GATEWAY#{c}="#{route.gateway}")
+            if update_route_table
+              system(%(/sbin/ip route add #{route.address}/#{route.netmask} via #{route.gateway}))
+            end
           end
         end
       end
-      system(%(/bin/bash -c 'while ! /sbin/ip link show "#{name}"; do sleep 1; done'))
-      system(%(/sbin/ifup #{name} > /dev/null))
     end
 
     def allocate_ip
