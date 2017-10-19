@@ -101,6 +101,10 @@ module Bumblebee
         f.puts %(DEVICE="#{name}")
         f.puts %(ONBOOT="yes")
         f.puts %(TYPE="Ethernet")
+        # Set MTU to 9001 on EC2 to ensure use of jumbo frames.
+        # (Required for placement group comms to allow use of 10Gbps+
+        # bandwidth.)
+        f.puts %(MTU="9001") if Bumblebee.platform.aws?
         if dhcp?
           f.puts %(BOOTPROTO="dhcp")
           f.puts %(PEERDNS="no")
