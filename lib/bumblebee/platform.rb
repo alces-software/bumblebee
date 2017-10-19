@@ -66,7 +66,14 @@ module Bumblebee
                    File.read('/sys/hypervisor/uuid')[0..2] == 'ec2'
                   'aws'
                 else
-                  'openstack'
+                  baseboard = IO.popen('/usr/sbin/dmidecode -s baseboard-manufacturer') do |io|
+                    io.read
+                  end.chomp
+                  if baseboard == 'Amazon Corporate LLC'
+                    'aws'
+                  else
+                    'openstack'
+                  end
                 end
     end
 
